@@ -1,0 +1,15 @@
+# Diese Dateien/Ordner sollen NICHT in Git gesichert werden:
+
+# Virtuelle Python-Umgebung (kann jederzeit neu erzeugt werden)
+.venv/
+
+# Von Python automatisch erzeugte Hilfsdateien
+__pycache__/
+*.pyc
+
+# SQLite-Datenbankdateien (kommen später, enthalten nur lokale Daten)
+*.db
+*.sqlite3
+
+# Lokale Claude-Code-Einstellungen (gelten nur für diesen Rechner)
+.claude/settings.local.json

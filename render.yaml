@@ -1,0 +1,9 @@
+# Konfiguration für das Hosting bei Render (https://render.com)
+# Render liest diese Datei automatisch ("Blueprint") und richtet die App ein.
+services:
+  - type: web
+    name: elektrovergleich
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"

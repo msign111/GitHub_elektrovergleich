@@ -1,0 +1,8 @@
+# Benötigte Python-Pakete (feste Versionen für einen stabilen Server-Start)
+fastapi==0.139.0          # Web-Framework
+uvicorn==0.50.0           # Server, der die App ausführt
+jinja2==3.1.6             # Baut die HTML-Seiten
+python-multipart==0.0.32  # Für den CSV-Datei-Upload
+requests==2.34.2          # Ruft die Such-API/Webseiten der Shops ab
+beautifulsoup4==4.15.0    # Liest HTML-Seiten einzelner Shops aus (elektroland24)
+lxml==6.1.1               # Schneller HTML-Parser für BeautifulSoup

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elektrovergleich – Warenkorb vergleichen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --surface: #f5f5f7;
+            --surface-2: #fbfbfd;
+            --text: #0a0a0a;
+            --muted: #6b7280;
+            --hairline: #ececee;
+            --accent: #12a150;
+            --accent-weak: #f0faf4;
+            --primary: #0a0a0a;
+            --radius: 18px;
+            --radius-sm: 12px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+            --shadow: 0 6px 30px rgba(0,0,0,.07);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px 80px; }
+
+        .site-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 0 10px; }
+        .logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 19px; letter-spacing: -.02em; }
+        .logo .bolt { width: 22px; height: 22px; color: var(--accent); }
+        .logo .lite { color: var(--muted); font-weight: 600; }
+
+        .hero { padding: 40px 0 8px; max-width: 640px; }
+        .hero h1 { font-size: 46px; line-height: 1.03; letter-spacing: -.03em; font-weight: 700; margin: 0 0 14px; }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .sub { color: var(--muted); font-size: 18px; margin: 0; }
+
+        .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+        .card {
+            background: var(--bg); border: 1px solid var(--hairline); border-radius: var(--radius);
+            padding: 26px; display: flex; flex-direction: column;
+            transition: box-shadow .25s ease, border-color .25s ease, transform .25s ease;
+        }
+        .card:hover { box-shadow: var(--shadow); border-color: #e2e2e6; transform: translateY(-2px); }
+        .card .step { font-size: 12px; font-weight: 600; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; }
+        .card h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 8px 0 6px; }
+        .card .lead { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+        .card form { display: flex; flex-direction: column; flex: 1; }
+
+        /* CSV-Dropzone */
+        .dropzone {
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; gap: 6px; padding: 30px 16px; border: 1.5px dashed #d4d4d8;
+            border-radius: var(--radius-sm); background: var(--surface-2); cursor: pointer;
+            transition: border-color .2s ease, background .2s ease; flex: 1;
+        }
+        .dropzone:hover, .dropzone.drag { border-color: var(--accent); background: var(--accent-weak); }
+        .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .dz-icon { width: 30px; height: 30px; color: var(--muted); }
+        .dz-title { font-weight: 600; font-size: 15px; }
+        .dz-hint { color: var(--muted); font-size: 13px; }
+        .dz-file { color: var(--accent); font-size: 13px; font-weight: 600; min-height: 16px; word-break: break-all; }
+
+        /* Textarea */
+        textarea {
+            width: 100%; box-sizing: border-box; flex: 1; min-height: 130px; resize: vertical;
+            font-family: 'Inter', monospace; font-size: 14px; line-height: 1.6; color: var(--text);
+            padding: 14px; border: 1px solid var(--hairline); border-radius: var(--radius-sm); background: var(--surface-2);
+            transition: border-color .2s ease, background .2s ease;
+        }
+        textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+
+        .field-hint { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+        .field-hint code { background: var(--surface); padding: 2px 7px; border-radius: 6px; font-size: 12px; }
+
+        .cta {
+            margin-top: 18px; border: none; border-radius: 999px; background: var(--primary); color: #fff;
+            padding: 13px 22px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: opacity .2s ease, transform .12s ease;
+        }
+        .cta:hover { opacity: .88; }
+        .cta:active { transform: scale(.98); }
+
+        .trust { margin-top: 40px; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .chip { background: var(--surface); border-radius: 999px; padding: 5px 12px; font-weight: 500; color: var(--text); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        .hero { animation: fadeUp .5s ease both; }
+        .cards { animation: fadeUp .5s ease both; animation-delay: .08s; }
+        .trust { animation: fadeUp .5s ease both; animation-delay: .16s; }
+
+        @media (max-width: 700px) {
+            .hero h1 { font-size: 34px; }
+            .cards { grid-template-columns: 1fr; }
+            .wrap { padding: 0 16px 60px; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="site-head">
+            <span class="logo">
+                <svg class="bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/>
+                </svg>
+                Elektro<span class="lite">vergleich</span>
+            </span>
+        </header>
+
+        <section class="hero">
+            <h1>Elektromaterial <span class="accent">clever</span> einkaufen.</h1>
+            <p class="sub">Lade deinen Warenkorb hoch oder tippe die Artikel direkt ein – wir vergleichen
+                Preis und Verfügbarkeit live bei mehreren Elektro-Großhändlern.</p>
+        </section>
+
+        <div class="cards">
+            <!-- CSV-Upload -->
+            <div class="card">
+                <span class="step">Variante 1</span>
+                <h2>CSV-Datei hochladen</h2>
+                <p class="lead">Eine Tabelle mit Spalten wie Hersteller, Artikelnummer, EAN, Menge, Beschreibung.</p>
+                <form action="/warenkorb" method="post" enctype="multipart/form-data">
+                    <label class="dropzone" id="dropzone">
+                        <input type="file" id="datei" name="datei" accept=".csv" required>
+                        <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 16V4m0 0 4 4m-4-4L8 8"></path>
+                            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+                        </svg>
+                        <span class="dz-title">CSV-Datei auswählen</span>
+                        <span class="dz-hint">oder hierher ziehen</span>
+                        <span class="dz-file" id="dz-file"></span>
+                    </label>
+                    <button type="submit" class="cta">Vergleich starten</button>
+                </form>
+            </div>
+
+            <!-- Direkteingabe -->
+            <div class="card">
+                <span class="step">Variante 2</span>
+                <h2>Artikel direkt eingeben</h2>
+                <p class="lead">Eine Zeile pro Artikel – eine EAN oder Artikelnummer, optional mit Menge.</p>
+                <form action="/warenkorb-manuell" method="post">
+                    <textarea id="eingabe" name="eingabe"
+                        placeholder="4012740123456&#10;MBN116; 10&#10;MEG2301-0319; 5" required></textarea>
+                    <p class="field-hint">
+                        Beispiele: <code>4012740123456</code> (nur EAN) · <code>MBN116; 10</code> (Artikelnummer mit Menge)
+                    </p>
+                    <button type="submit" class="cta">Vergleich starten</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="trust">
+            <span>Aktuell im Vergleich:</span>
+            <span class="chip">Elektro-Wandelt</span>
+            <span class="chip">elektroland24</span>
+        </div>
+    </div>
+
+    <script>
+        // CSV-Dropzone: Dateiname anzeigen + Ziehen-und-Ablegen
+        (function () {
+            const zone = document.getElementById("dropzone");
+            const input = document.getElementById("datei");
+            const anzeige = document.getElementById("dz-file");
+            if (!zone || !input) return;
+
+            input.addEventListener("change", function () {
+                anzeige.textContent = input.files.length ? "Ausgewählt: " + input.files[0].name : "";
+            });
+
+            ["dragenter", "dragover"].forEach(ev => zone.addEventListener(ev, e => {
+                e.preventDefault(); zone.classList.add("drag");
+            }));
+            ["dragleave", "drop"].forEach(ev => zone.addEventListener(ev, e => {
+                e.preventDefault(); zone.classList.remove("drag");
+            }));
+            zone.addEventListener("drop", function (e) {
+                if (e.dataTransfer && e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    input.dispatchEvent(new Event("change"));
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

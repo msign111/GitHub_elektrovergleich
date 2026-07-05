@@ -1,0 +1,20 @@
+# Fortschritt
+
+> Kurzes, verständliches Änderungs-Protokoll dieses Projekts. Neueste Einträge oben.
+> Claude Code ergänzt hier nach jedem abgeschlossenen Schritt eine Zeile (Datum + was gemacht wurde).
+> Dient als Brücke zu Kis Wissens-Gedächtnis (Obsidian).
+
+## 2026-07-05
+- Grundgerüst mit FastAPI-Startseite
+- CSV-Upload und Warenkorb-Anzeige
+- Direkteingabe von Artikeln/EANs zusätzlich zum CSV-Upload
+- Echter Shop-Adapter Elektro-Wandelt (Doofinder-Such-API, Matching per EAN/Herstellernummer)
+- EAN-Suche für Elektro-Wandelt zum Laufen gebracht (Doofinder findet EAN + Herstellernummer)
+- Zweiter Shop-Adapter elektroland24 (Shopware 6, Suche per EAN/Herstellernummer, Preis/Verfügbarkeit von der Produktseite)
+- Neue Vergleichsseite im Wunschdesign: Produkte mit Bild + Mengen-Schaltern, beide Shops nebeneinander, günstigster Shop als „best choice" grün, Summen mit Warenkorb-Link, Mengen live umgerechnet
+- „Warenkorb bei Shop"-Button füllt den Shop-Warenkorb mit allen gewählten Artikeln vor (Elektro-Wandelt per Link, elektroland24 per Formular) – ein Klick, kein erneutes Hinzufügen nötig
+- Versandkosten in die Rechnung aufgenommen (Elektro-Wandelt 4,90 €, elektroland24 5,90 €): Gesamt = Artikel + Versand, günstigster Shop wird inklusive Versand bestimmt; Summenzeile zeigt Artikel/Versand/Gesamt getrennt
+- Versandart-Umschalter (Paket/Sperrgut/Spedition) mit den offiziellen Preisen beider Shops; Gratis-Versand-ab-Funktion eingebaut (aktuell 0, da keine offizielle Grenze belegt); alles live umgerechnet
+- Vergleichsseite komplett neu gestaltet: minimalistisches, modernes Design (Inter-Schrift, viel Weißraum, feine Trennlinien, Segmented-Control für die Versandart, „Günstigste Wahl"-Badge, Ersparnis-Chip, dezente Animationen)
+- Startseite im gleichen minimalistischen Design überarbeitet: Hero, zwei Karten (CSV-Upload mit Drag&Drop-Feld und Direkteingabe), einheitliche Schrift/Farben, Shop-Chips
+- Deployment vorbereitet (Render): feste Paketversionen, render.yaml, Procfile, .python-version, DEPLOY.md-Anleitung – Ziel-Domain macherelektro.de (IONOS)

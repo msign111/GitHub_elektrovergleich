@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preisvergleich – Elektrovergleich</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --surface: #f5f5f7;
+            --surface-2: #fbfbfd;
+            --text: #0a0a0a;
+            --muted: #6b7280;
+            --hairline: #ececee;
+            --accent: #12a150;          /* Ersparnis / günstigste Wahl */
+            --accent-weak: #f0faf4;
+            --primary: #0a0a0a;         /* primäre Buttons */
+            --radius: 18px;
+            --radius-sm: 12px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+            --shadow: 0 4px 24px rgba(0,0,0,.06);
+        }
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 80px; }
+
+        /* Kopf */
+        .site-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 0 10px; }
+        .logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 19px; letter-spacing: -.02em; }
+        .logo .bolt { width: 22px; height: 22px; color: var(--accent); }
+        .logo .lite { color: var(--muted); font-weight: 600; }
+        .back-top { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
+        .back-top:hover { color: var(--text); }
+
+        /* Hero */
+        .hero { padding: 26px 0 6px; }
+        .hero h1 { font-size: 40px; line-height: 1.05; letter-spacing: -.03em; font-weight: 700; margin: 0 0 10px; }
+        .hero .sub { color: var(--muted); font-size: 17px; max-width: 560px; margin: 0; }
+
+        /* Steuerleiste */
+        .controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 30px 0 8px; }
+        .meta { color: var(--muted); font-size: 13.5px; }
+        .seg-label { color: var(--muted); font-size: 13.5px; margin-right: 10px; }
+        .segmented { display: inline-flex; background: var(--surface); border-radius: 999px; padding: 4px; }
+        .segmented button {
+            border: none; background: transparent; padding: 8px 18px; border-radius: 999px;
+            font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer;
+            transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+        }
+        .segmented button:hover { color: var(--text); }
+        .segmented button.active { background: #fff; color: var(--text); box-shadow: var(--shadow-sm); }
+
+        /* Tabelle */
+        .table-wrap { overflow-x: auto; margin-top: 14px; }
+        table.vergleich { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 660px; }
+        table.vergleich th, table.vergleich td { padding: 22px 18px; text-align: center; vertical-align: top; }
+
+        /* Shop-Spalten */
+        .shop-col { transition: background .25s ease; }
+        thead th.shop-col { position: sticky; top: 0; background: var(--bg); z-index: 3; padding-top: 14px; padding-bottom: 18px; }
+        thead th.shop-col.is-best { background: var(--accent-weak); border-radius: var(--radius) var(--radius) 0 0; }
+        td.shop-col.is-best { background: var(--accent-weak); }
+        tfoot td.shop-col.is-best { border-radius: 0 0 var(--radius) var(--radius); }
+        .shop-head { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .best-badge {
+            display: none; align-items: center; gap: 5px;
+            background: var(--accent); color: #fff; font-size: 11.5px; font-weight: 600;
+            padding: 4px 11px; border-radius: 999px; letter-spacing: .01em;
+        }
+        .shop-col.is-best .best-badge { display: inline-flex; }
+        .shop-name { font-weight: 600; font-size: 17px; letter-spacing: -.01em; }
+
+        /* Produktspalte */
+        td.produkt { text-align: left; width: 340px; }
+        thead td.produkt, thead th.corner { background: var(--bg); position: sticky; top: 0; z-index: 2; }
+        .prod { display: flex; gap: 15px; align-items: center; }
+        .prod-img {
+            width: 66px; height: 66px; border-radius: 14px; background: var(--surface);
+            object-fit: contain; padding: 7px; border: 1px solid var(--hairline); flex: none;
+        }
+        .prod-name { font-weight: 600; font-size: 14px; line-height: 1.32; letter-spacing: -.01em; }
+        .prod-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+        /* Mengen-Stepper */
+        .stepper { display: inline-flex; align-items: center; margin-top: 13px; background: var(--surface); border-radius: 999px; padding: 4px; }
+        .stepper button {
+            width: 30px; height: 30px; border: none; background: #fff; border-radius: 50%;
+            font-size: 17px; line-height: 1; cursor: pointer; color: var(--text); box-shadow: var(--shadow-sm);
+            transition: transform .12s ease;
+        }
+        .stepper button:active { transform: scale(.9); }
+        .stepper .menge-wert { min-width: 40px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        /* Angebots-Zelle */
+        .price { font-size: 23px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+        .per { color: var(--muted); font-size: 12px; margin-top: 1px; }
+        .line { color: var(--muted); font-size: 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+        .avail {
+            display: inline-flex; align-items: center; gap: 7px; margin-top: 14px;
+            font-size: 12.5px; color: var(--text); background: var(--surface); padding: 6px 11px; border-radius: 999px;
+        }
+        .avail .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+        .avail.no { color: var(--muted); }
+        .avail.no .dot { background: #cfcfd4; }
+        .prodlink { display: inline-block; margin-top: 11px; color: var(--muted); font-size: 12.5px; text-decoration: none; transition: color .2s; }
+        .prodlink:hover { color: var(--text); }
+        .missing { color: #a1a1aa; font-size: 13px; }
+
+        /* Summenzeile */
+        tfoot td { border-top: 1px solid var(--hairline); padding-top: 22px; }
+        tfoot td.produkt { color: var(--muted); font-weight: 600; font-size: 14px; }
+        .sum-line { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+        .sum-total { font-size: 25px; font-weight: 700; letter-spacing: -.02em; margin-top: 7px; font-variant-numeric: tabular-nums; }
+        .shop-col.is-best .sum-total { color: var(--accent); }
+        .saving {
+            display: none; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--accent);
+            background: #fff; border: 1px solid #d7f0e1; padding: 4px 10px; border-radius: 999px;
+        }
+        .shop-col.is-best .saving { display: inline-block; }
+        .versand-hinweis { color: var(--accent); font-size: 11.5px; margin-top: 2px; min-height: 14px; }
+        .unvollstaendig { color: #b4531f; font-size: 11.5px; margin-top: 4px; }
+
+        /* Warenkorb-Button */
+        .korb-btn {
+            margin-top: 16px; border: 1px solid var(--hairline); background: #fff; color: var(--text);
+            border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: border-color .2s, background .2s, opacity .2s, transform .12s;
+        }
+        .korb-btn:hover { border-color: #c9c9ce; }
+        .korb-btn:active { transform: scale(.97); }
+        .shop-col.is-best .korb-btn { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .shop-col.is-best .korb-btn:hover { opacity: .86; }
+
+        /* Fußnoten */
+        .fineprint { color: var(--muted); font-size: 12.5px; line-height: 1.6; margin: 30px 0 0; max-width: 720px; }
+        .back { display: inline-block; margin-top: 26px; color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none; }
+        .back:hover { color: var(--accent); }
+
+        /* dezente Einblend-Animation */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        .hero, .controls, .table-wrap, .fineprint { animation: fadeUp .5s ease both; }
+        .controls { animation-delay: .05s; }
+        .table-wrap { animation-delay: .1s; }
+        tbody tr { animation: fadeUp .5s ease both; }
+        tbody tr:nth-child(1) { animation-delay: .12s; }
+        tbody tr:nth-child(2) { animation-delay: .17s; }
+        tbody tr:nth-child(3) { animation-delay: .22s; }
+        tbody tr:nth-child(4) { animation-delay: .27s; }
+        tbody tr:nth-child(5) { animation-delay: .32s; }
+        tbody tr:nth-child(n+6) { animation-delay: .37s; }
+
+        @media (max-width: 620px) {
+            .hero h1 { font-size: 32px; }
+            .wrap { padding: 0 16px 60px; }
+            td.produkt { width: 240px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="site-head">
+            <span class="logo">
+                <svg class="bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/>
+                </svg>
+                Elektro<span class="lite">vergleich</span>
+            </span>
+            <a class="back-top" href="/">Neuer Vergleich</a>
+        </header>
+
+        <section class="hero">
+            <h1>Preisvergleich</h1>
+            <p class="sub">Dein Warenkorb bei mehreren Elektro-Großhändlern – Preis und Verfügbarkeit auf einen Blick.</p>
+        </section>
+
+        <div class="controls">
+            <div class="meta">{{ anzahl }} Position(en) · Quelle: {{ quelle }} · live abgefragt</div>
+            <div>
+                <span class="seg-label">Versandart</span>
+                <span class="segmented" role="tablist" aria-label="Versandart">
+                    <button type="button" data-art="paket" class="active" aria-selected="true">Paket</button>
+                    <button type="button" data-art="sperrgut" aria-selected="false">Sperrgut</button>
+                    <button type="button" data-art="spedition" aria-selected="false">Spedition</button>
+                </span>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="vergleich">
+                <thead>
+                    <tr>
+                        <th class="corner"></th>
+                        {% for shop in shops %}
+                        <th class="shop-col {% if shop.slug == best_slug %}is-best{% endif %}" data-shop="{{ shop.slug }}">
+                            <span class="shop-head">
+                                <span class="best-badge">✓ Günstigste Wahl</span>
+                                <span class="shop-name">{{ shop.name }}</span>
+                            </span>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for zeile in zeilen %}
+                    {% set p = zeile.position %}
+                    <tr data-row>
+                        <td class="produkt">
+                            <div class="prod">
+                                {% if zeile.bild %}
+                                <img class="prod-img" src="{{ zeile.bild }}" alt="" loading="lazy">
+                                {% else %}
+                                <div class="prod-img"></div>
+                                {% endif %}
+                                <div>
+                                    <div class="prod-name">{{ zeile.anzeige_name }}</div>
+                                    <div class="prod-meta">
+                                        {% if p.artikelnummer %}Art.-Nr. {{ p.artikelnummer }}{% endif %}
+                                        {% if p.ean %}{% if p.artikelnummer %} · {% endif %}EAN {{ p.ean }}{% endif %}
+                                    </div>
+                                    <div class="stepper">
+                                        <button type="button" class="minus" aria-label="weniger">−</button>
+                                        <span class="menge-wert" data-menge="{{ p.menge }}">{{ p.menge }}</span>
+                                        <button type="button" class="plus" aria-label="mehr">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        {% for shop in shops %}
+                        {% set a = zeile.angebote[shop.slug] %}
+                        <td class="shop-col cell {% if shop.slug == best_slug %}is-best{% endif %}"
+                            data-shop="{{ shop.slug }}"
+                            data-produkt-id="{{ a.shop_produkt_id }}"
+                            data-unit="{% if a.gefunden and a.preis is not none %}{{ a.preis }}{% endif %}">
+                            {% if a.gefunden %}
+                                <div class="price">{{ "%.2f"|format(a.preis)|replace(".", ",") }} €</div>
+                                <div class="per">pro Stück</div>
+                                <div class="line">× {{ p.menge }} = <span class="zs-wert">{{ "%.2f"|format(a.gesamtpreis(p.menge))|replace(".", ",") }}</span> €</div>
+                                <div class="avail {% if not a.lieferbar %}no{% endif %}">
+                                    <span class="dot"></span>
+                                    <span>{{ a.verfuegbarkeit or ("lieferbar" if a.lieferbar else "nicht lieferbar") }}</span>
+                                </div>
+                                {% if a.produktlink %}
+                                <div><a class="prodlink" href="{{ a.produktlink }}" target="_blank" rel="noopener">Zum Produkt ↗</a></div>
+                                {% endif %}
+                            {% else %}
+                                <div class="missing">nicht gefunden</div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+                <tfoot>
+                    <tr>
+                        <td class="produkt">Gesamt inkl. Versand</td>
+                        {% for shop in shops %}
+                        <td class="shop-col {% if shop.slug == best_slug %}is-best{% endif %}" data-shop="{{ shop.slug }}">
+                            <div class="sum-line">Artikel <span data-artikel>{{ "%.2f"|format(artikel_summen[shop.slug])|replace(".", ",") }} €</span></div>
+                            <div class="sum-line">+ Versand <span data-versand>{{ "%.2f"|format(versand[shop.slug])|replace(".", ",") }} €</span></div>
+                            <div class="versand-hinweis" data-versand-hinweis></div>
+                            <div class="sum-total">= <span data-summe>{{ "%.2f"|format(gesamt_summen[shop.slug])|replace(".", ",") }} €</span></div>
+                            <div class="saving" data-ersparnis></div>
+                            {% if not vollstaendig[shop.slug] %}
+                            <div class="unvollstaendig">nicht alle Artikel gefunden</div>
+                            {% endif %}
+                            <div><button type="button" class="korb-btn" data-shop="{{ shop.slug }}">Zum Warenkorb</button></div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <p class="fineprint">
+            Alle Gesamtpreise verstehen sich inkl. Versand der gewählten Versandart; der günstigste Shop wird inklusive
+            Versand ermittelt. Mit „Zum Warenkorb" öffnest du den jeweiligen Shop mit allen oben gewählten Artikeln und
+            Mengen bereits im Warenkorb. Bild- und Produktdaten stammen live von den Shops.
+        </p>
+
+        <a class="back" href="/">← Neuen Warenkorb vergleichen</a>
+    </div>
+
+    <script>
+        // Shop-Konfiguration (Name, Website, Warenkorb-Typ, Versandkosten) vom Server
+        const SHOPS_CFG = {{ shops | tojson }};
+        const KORB = {};
+        SHOPS_CFG.forEach(s => { KORB[s.slug] = s; });
+
+        (function () {
+            const tabelle = document.querySelector("table.vergleich");
+            const shops = Array.from(document.querySelectorAll("thead th.shop-col")).map(th => th.dataset.shop);
+
+            function euro(zahl) {
+                return zahl.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+            }
+
+            function aktuelleVersandart() {
+                const b = document.querySelector(".segmented button.active");
+                return b ? b.dataset.art : "paket";
+            }
+
+            // Versandkosten eines Shops für die gewählte Versandart
+            function versandBetrag(slug, artikel, art) {
+                if (artikel <= 0) return 0;
+                const c = KORB[slug];
+                if (art === "sperrgut") return parseFloat(c.versand_sperrgut) || 0;
+                if (art === "spedition") return parseFloat(c.versand_spedition) || 0;
+                const grenze = parseFloat(c.versandfrei_ab) || 0;
+                if (grenze > 0 && artikel >= grenze) return 0;
+                return parseFloat(c.versand_paket) || 0;
+            }
+
+            function versandHinweis(slug, artikel, art) {
+                const grenze = parseFloat(KORB[slug].versandfrei_ab) || 0;
+                if (art === "paket" && grenze > 0) {
+                    return artikel >= grenze ? "✓ versandkostenfrei" : "kostenlos ab " + euro(grenze);
+                }
+                return "";
+            }
+
+            // Artikel eines Shops mit aktueller Menge (für den Warenkorb-Link)
+            function artikelFuerShop(slug) {
+                const items = [];
+                tabelle.querySelectorAll("tbody tr[data-row]").forEach(tr => {
+                    const menge = parseInt(tr.querySelector(".menge-wert").dataset.menge, 10) || 0;
+                    const zelle = tr.querySelector('td.cell[data-shop="' + slug + '"]');
+                    const pid = zelle ? zelle.dataset.produktId : "";
+                    if (pid) items.push({ pid: pid, menge: menge });
+                });
+                return items;
+            }
+
+            function warenkorbOeffnen(slug) {
+                const cfg = KORB[slug];
+                if (!cfg) return;
+                const items = artikelFuerShop(slug);
+                if (items.length === 0) { window.open(cfg.website, "_blank"); return; }
+
+                if (cfg.warenkorb_typ === "oxid") {
+                    const teile = items.map(i => "aproducts%5B" + encodeURIComponent(i.pid) + "%5D%5Bam%5D=" + i.menge);
+                    window.open(cfg.warenkorb_endpunkt + "?cl=basket&fnc=tobasket&" + teile.join("&"), "_blank");
+                } else if (cfg.warenkorb_typ === "shopware") {
+                    const form = document.createElement("form");
+                    form.method = "post"; form.action = cfg.warenkorb_endpunkt; form.target = "_blank";
+                    const feld = (n, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; form.appendChild(i); };
+                    items.forEach(i => {
+                        const b = "lineItems[" + i.pid + "]";
+                        feld(b + "[id]", i.pid); feld(b + "[referencedId]", i.pid);
+                        feld(b + "[type]", "product"); feld(b + "[quantity]", i.menge);
+                        feld(b + "[stackable]", "1"); feld(b + "[removable]", "1");
+                    });
+                    feld("redirectTo", "frontend.checkout.cart.page");
+                    document.body.appendChild(form); form.submit(); form.remove();
+                } else {
+                    window.open(cfg.website, "_blank");
+                }
+            }
+
+            function neuBerechnen() {
+                const artikel = {};
+                const vollstaendig = {};
+                shops.forEach(s => { artikel[s] = 0; vollstaendig[s] = true; });
+
+                tabelle.querySelectorAll("tbody tr[data-row]").forEach(tr => {
+                    const menge = parseInt(tr.querySelector(".menge-wert").dataset.menge, 10) || 0;
+                    tr.querySelectorAll("td.cell").forEach(td => {
+                        const shop = td.dataset.shop;
+                        const unit = td.dataset.unit;
+                        if (unit === "" || unit === undefined) { vollstaendig[shop] = false; return; }
+                        const linie = parseFloat(unit) * menge;
+                        const zs = td.querySelector(".zs-wert");
+                        if (zs) zs.textContent = linie.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        artikel[shop] += linie;
+                    });
+                });
+
+                const art = aktuelleVersandart();
+                const gesamt = {};
+                shops.forEach(s => {
+                    const v = versandBetrag(s, artikel[s], art);
+                    gesamt[s] = artikel[s] + v;
+                    const zelle = tabelle.querySelector('tfoot td.shop-col[data-shop="' + s + '"]');
+                    if (zelle) {
+                        const a = zelle.querySelector("[data-artikel]");
+                        const ve = zelle.querySelector("[data-versand]");
+                        const g = zelle.querySelector("[data-summe]");
+                        const hw = zelle.querySelector("[data-versand-hinweis]");
+                        if (a) a.textContent = euro(artikel[s]);
+                        if (ve) ve.textContent = euro(v);
+                        if (g) g.textContent = euro(gesamt[s]);
+                        if (hw) hw.textContent = versandHinweis(s, artikel[s], art);
+                    }
+                });
+
+                // Günstigsten Shop bestimmen (inkl. Versand)
+                let kandidaten = shops.filter(s => vollstaendig[s] && artikel[s] > 0);
+                if (kandidaten.length === 0) kandidaten = shops.filter(s => artikel[s] > 0);
+                let best = null;
+                kandidaten.forEach(s => { if (best === null || gesamt[s] < gesamt[best]) best = s; });
+
+                // Zweitbester (für die Ersparnis-Anzeige)
+                let zweitMin = Infinity;
+                shops.forEach(s => { if (s !== best && artikel[s] > 0 && gesamt[s] < zweitMin) zweitMin = gesamt[s]; });
+
+                // Hervorhebung + Ersparnis setzen
+                document.querySelectorAll("[data-shop]").forEach(el => {
+                    el.classList.toggle("is-best", el.dataset.shop === best);
+                });
+                shops.forEach(s => {
+                    const zelle = tabelle.querySelector('tfoot td.shop-col[data-shop="' + s + '"]');
+                    const sv = zelle ? zelle.querySelector("[data-ersparnis]") : null;
+                    if (!sv) return;
+                    if (s === best && zweitMin !== Infinity && (zweitMin - gesamt[s]) > 0.005) {
+                        sv.textContent = "spart " + euro(zweitMin - gesamt[s]);
+                    } else {
+                        sv.textContent = "";
+                    }
+                });
+            }
+
+            // Klicks: Warenkorb-Button und Mengen-Stepper
+            tabelle.addEventListener("click", function (e) {
+                const korb = e.target.closest(".korb-btn");
+                if (korb) { warenkorbOeffnen(korb.dataset.shop); return; }
+
+                const btn = e.target.closest("button.plus, button.minus");
+                if (!btn) return;
+                const span = btn.parentElement.querySelector(".menge-wert");
+                let menge = parseInt(span.dataset.menge, 10) || 0;
+                menge += btn.classList.contains("plus") ? 1 : -1;
+                if (menge < 1) menge = 1;
+                span.dataset.menge = menge;
+                span.textContent = menge;
+                neuBerechnen();
+            });
+
+            // Versandart-Umschalter (Segmented Control)
+            document.querySelectorAll(".segmented button").forEach(b => {
+                b.addEventListener("click", function () {
+                    document.querySelectorAll(".segmented button").forEach(x => {
+                        x.classList.remove("active"); x.setAttribute("aria-selected", "false");
+                    });
+                    b.classList.add("active"); b.setAttribute("aria-selected", "true");
+                    neuBerechnen();
+                });
+            });
+
+            neuBerechnen();
+        })();
+    </script>
+</body>
+</html>
