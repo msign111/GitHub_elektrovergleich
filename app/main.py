@@ -1,12 +1,14 @@
 # main.py – Startpunkt der App.
 # Hier wird FastAPI gestartet und die Seiten werden ausgeliefert.
 
+import os
 import re
+import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from fastapi import FastAPI, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.csv_import import csv_einlesen
@@ -32,6 +34,43 @@ SHOPS = [
 
 # Schnelle Datenquelle fürs Stöbern/Suchen (liefert ganze Produktlisten).
 KATALOG_QUELLE = next((s for s in SHOPS if hasattr(s, "produktliste")), SHOPS[0])
+
+
+# ---- Passwortschutz (einfache Vorschau-Sperre) ----
+# Passwort kommt aus der Umgebungsvariable SEITEN_PASSWORT; sonst Standard.
+SEITEN_PASSWORT = os.environ.get("SEITEN_PASSWORT", "elektrohase")
+FREIE_PFADE = {"/login"}
+
+
+def _zugangstoken() -> str:
+    """Erzeugt aus dem Passwort einen Cookie-Wert (nicht das Passwort selbst)."""
+    return hashlib.sha256(("elektrovergleich::" + SEITEN_PASSWORT).encode("utf-8")).hexdigest()
+
+
+@app.middleware("http")
+async def passwortschutz(request: Request, call_next):
+    """Lässt nur eingeloggte Besucher durch; sonst zur Login-Seite."""
+    pfad = request.url.path
+    if pfad in FREIE_PFADE or pfad == "/favicon.ico":
+        return await call_next(request)
+    if request.cookies.get("zugang") == _zugangstoken():
+        return await call_next(request)
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_seite(request: Request, fehler: int = 0):
+    return templates.TemplateResponse(request, "login.html", {"fehler": bool(fehler)})
+
+
+@app.post("/login")
+async def login_pruefen(passwort: str = Form("")):
+    if passwort == SEITEN_PASSWORT:
+        antwort = RedirectResponse("/", status_code=303)
+        antwort.set_cookie("zugang", _zugangstoken(), max_age=60 * 60 * 24 * 30,
+                           httponly=True, samesite="lax")
+        return antwort
+    return RedirectResponse("/login?fehler=1", status_code=303)
 
 
 def _slug(text: str) -> str:

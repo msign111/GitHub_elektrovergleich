@@ -131,6 +131,27 @@
 
         /* Variante 2: Artikel einzeln erfassen */
         .erfass-zeile { display: flex; gap: 8px; }
+        .erfass-input { position: relative; flex: 1; min-width: 0; }
+        .erfass-input input { width: 100%; }
+
+        /* Vorschläge (Autovervollständigung) */
+        .erfass-suggest {
+            position: absolute; left: 0; right: 0; top: calc(100% + 8px); z-index: 30;
+            background: #fff; border: 1px solid var(--hairline); border-radius: 14px;
+            box-shadow: var(--shadow); overflow: hidden; display: none;
+        }
+        .erfass-suggest.show { display: block; }
+        .sug-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; }
+        .sug-item:hover, .sug-item.aktiv { background: var(--surface); }
+        .sug-item img { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; background: var(--surface); flex: none; }
+        .sug-emoji { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: var(--surface); border-radius: 8px; flex: none; }
+        .sug-info { flex: 1; min-width: 0; }
+        .sug-name { font-size: 13.5px; font-weight: 500; line-height: 1.25;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .sug-meta { color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+        .sug-price { margin-left: auto; font-weight: 700; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; align-self: center; }
+        .sug-add { margin-left: 6px; color: var(--accent); font-weight: 700; font-size: 18px; align-self: center; }
+
         .erfass-zeile input {
             flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 12px 14px;
             border: 1px solid var(--hairline); border-radius: var(--radius-sm); background: var(--surface-2);
@@ -232,8 +253,11 @@
                     Am Ende vergleichen wir live bei allen Shops.</p>
 
                 <div class="erfass-zeile">
-                    <input id="artnr" type="text" autocomplete="off"
-                        placeholder="z. B. MBN116 oder 4012740123456">
+                    <div class="erfass-input">
+                        <input id="artnr" type="text" autocomplete="off"
+                            placeholder="Artikelnr., EAN, Marke … z. B. „Merten Steckdose"">
+                        <div class="erfass-suggest" id="erfass-suggest"></div>
+                    </div>
                     <button type="button" class="add-btn" id="add-btn">Hinzufügen</button>
                 </div>
                 <div class="erfass-status" id="erfass-status"></div>
@@ -310,9 +334,19 @@
             const status = document.getElementById("erfass-status");
             const liste = document.getElementById("pos-liste");
             const vergleichBtn = document.getElementById("vergleich-btn");
+            const suggest = document.getElementById("erfass-suggest");
             if (!feld) return;
 
             const positionen = [];  // { k, t, bild, preis, m, gefunden }
+            let letzteItems = [];
+            let sucheDebounce;
+            function verstecke(){ suggest.classList.remove("show"); }
+            async function apiSuche(q){ const r = await fetch("/api/suche?q=" + encodeURIComponent(q)); return await r.json(); }
+            function pushPosition(k, t, bild, preis, gefunden){
+                const v = positionen.find(p => norm(p.k) === norm(k));
+                if (v) v.m += 1; else positionen.push({ k: k, t: t, bild: bild, preis: preis, m: 1, gefunden: gefunden });
+                render();
+            }
 
             function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
             function euro(n){ return n.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
@@ -345,27 +379,21 @@
             async function hinzufuegen(){
                 const begriff = feld.value.trim();
                 if (begriff.length < 2){ feld.focus(); return; }
-
-                // schon in der Liste? Dann Menge erhöhen.
-                const vorhanden = positionen.find(p => norm(p.k) === norm(begriff));
-                if (vorhanden){ vorhanden.m += 1; render(); feld.value = ""; feld.focus(); return; }
-
+                verstecke();
                 addBtn.classList.add("laden");
                 status.className = "erfass-status";
                 status.textContent = "Suche …";
                 try {
-                    const r = await fetch("/api/suche?q=" + encodeURIComponent(begriff));
-                    const items = await r.json();
+                    const items = await apiSuche(begriff);
                     const p = besterTreffer(items, begriff);
                     if (p){
-                        positionen.push({ k: begriff, t: p.titel, bild: p.bild, preis: p.preis, m: 1, gefunden: true });
+                        pushPosition(p.artikelnummer || p.ean || begriff, p.titel, p.bild, p.preis, true);
                         status.textContent = "Artikel hinzugefügt.";
                     } else {
-                        positionen.push({ k: begriff, t: begriff, bild: "", preis: null, m: 1, gefunden: false });
+                        pushPosition(begriff, begriff, "", null, false);
                         status.className = "erfass-status warn";
                         status.textContent = "Kein Vorschau-Treffer – der Artikel wird beim Vergleich trotzdem in allen Shops geprüft.";
                     }
-                    render();
                 } catch(e){
                     status.className = "erfass-status warn";
                     status.textContent = "Suche gerade nicht erreichbar – bitte nochmal versuchen.";
@@ -377,7 +405,46 @@
             }
 
             addBtn.addEventListener("click", hinzufuegen);
-            feld.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); hinzufuegen(); } });
+            feld.addEventListener("keydown", e => {
+                if (e.key === "Enter"){ e.preventDefault(); hinzufuegen(); }
+                else if (e.key === "Escape"){ verstecke(); }
+            });
+
+            // Vorschläge während des Tippens (Marke, Bezeichnung, EAN, Artikelnummer)
+            feld.addEventListener("input", () => {
+                clearTimeout(sucheDebounce);
+                const q = feld.value.trim();
+                if (q.length < 2){ verstecke(); return; }
+                sucheDebounce = setTimeout(async () => {
+                    try {
+                        letzteItems = (await apiSuche(q)).slice(0, 6);
+                        if (letzteItems.length === 0){ verstecke(); return; }
+                        suggest.innerHTML = letzteItems.map((p, i) => {
+                            const bild = p.bild ? '<img src="' + esc(p.bild) + '" alt="">' : '<div class="sug-emoji">📦</div>';
+                            const preis = (p.preis != null) ? euro(p.preis) : '';
+                            const meta = p.artikelnummer ? ('Art.-Nr. ' + esc(p.artikelnummer)) : (p.ean ? ('EAN ' + esc(p.ean)) : '');
+                            return '<div class="sug-item" data-i="' + i + '">' + bild
+                                + '<div class="sug-info"><div class="sug-name">' + esc(p.titel) + '</div>'
+                                + '<div class="sug-meta">' + meta + '</div></div>'
+                                + '<span class="sug-price">' + preis + '</span><span class="sug-add">+</span></div>';
+                        }).join('');
+                        suggest.classList.add("show");
+                    } catch(e){ verstecke(); }
+                }, 220);
+            });
+
+            // Vorschlag anklicken -> präzise Artikelnummer/EAN übernehmen
+            suggest.addEventListener("click", e => {
+                const it = e.target.closest(".sug-item");
+                if (!it) return;
+                const p = letzteItems[+it.dataset.i];
+                if (!p) return;
+                pushPosition(p.artikelnummer || p.ean, p.titel, p.bild, p.preis, true);
+                feld.value = ""; verstecke(); feld.focus();
+                status.className = "erfass-status"; status.textContent = "Artikel hinzugefügt.";
+            });
+
+            document.addEventListener("click", e => { if (!e.target.closest(".erfass-input")) verstecke(); });
 
             liste.addEventListener("click", e => {
                 const mengeBtn = e.target.closest("button[data-i]");

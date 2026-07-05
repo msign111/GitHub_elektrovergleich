@@ -33,8 +33,15 @@
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             text-rendering: optimizeLegibility;
+            position: relative;
+            overflow-x: hidden;
         }
-        .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 80px; }
+        /* weiche Farbverläufe im Hintergrund (wie Startseite) */
+        body::before { content: ""; position: fixed; top: -240px; right: -180px; width: 680px; height: 680px; z-index: 0;
+            background: radial-gradient(circle, rgba(18,161,80,.14), rgba(18,161,80,0) 68%); pointer-events: none; }
+        body::after { content: ""; position: fixed; bottom: -300px; left: -220px; width: 640px; height: 640px; z-index: 0;
+            background: radial-gradient(circle, rgba(10,90,210,.09), rgba(10,90,210,0) 68%); pointer-events: none; }
+        .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 1; }
 
         /* Kopf */
         .site-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 0 10px; }
@@ -46,8 +53,8 @@
 
         /* Hero */
         .hero { padding: 26px 0 6px; }
-        .hero h1 { font-size: 40px; line-height: 1.05; letter-spacing: -.03em; font-weight: 700; margin: 0 0 10px; }
-        .hero .sub { color: var(--muted); font-size: 17px; max-width: 560px; margin: 0; }
+        .hero h1 { font-size: 48px; line-height: 1.02; letter-spacing: -.035em; font-weight: 700; margin: 0 0 10px; }
+        .hero .sub { color: var(--muted); font-size: 17.5px; max-width: 560px; margin: 0; }
 
         /* Steuerleiste */
         .controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 30px 0 8px; }

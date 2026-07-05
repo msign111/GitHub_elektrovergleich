@@ -26,3 +26,6 @@
 - Direkteingabe (Variante 2) interaktiv gemacht: Artikelnummer/EAN einzeln eingeben → Bild, Name und Richtpreis werden angezeigt, Menge pro Artikel wählbar; die Liste geht per „Vergleich starten" in den Preisvergleich
 - Startseite neu geordnet: interaktive Artikel-Erfassung steht oben im Fokus, CSV-Upload darunter als Alternative; „Variante"-Beschriftungen entfernt
 - Startseite im Design überarbeitet (angelehnt an aktuelle Trends): große Typografie, dezente Hintergrund-Farbverläufe (Tiefe), dominante „schwebende" Hauptkarte mit Eyebrow-Label; CSV-Upload klein/kompakt als Alternative; mobil gestapelt
+- Autovervollständigung im Erfassungsfeld: Vorschläge (Bild, Name, Preis) beim Tippen von Marke/Bezeichnung/EAN/Artikelnummer, nach Relevanz/Verkaufsrang sortiert; Klick übernimmt den Artikel mit präziser Artikelnummer/EAN
+- Passwortschutz für die ganze Seite (Login-Seite + Cookie); Passwort „elektrohase", überschreibbar per Umgebungsvariable SEITEN_PASSWORT
+- Frischer Stil (Hintergrund-Verläufe, größere Überschrift) auch auf die Vergleichsseite angewendet
