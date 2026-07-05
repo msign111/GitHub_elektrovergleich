@@ -11,6 +11,7 @@
 # sonst antwortet sie mit "403 request not authenticated".
 
 import re
+import threading
 
 import requests
 
@@ -58,19 +59,28 @@ class ElektroWandeltAdapter(ShopAdapter):
     SUCH_URL = f"https://eu1-search.doofinder.com/6/{HASHID}/_search"
     SHOP = "https://www.elektro-wandelt.de"
 
-    def __init__(self, pause: float = 0.5):
-        super().__init__(pause)
-        self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-            ),
-            "Accept-Language": "de-DE,de;q=0.9",
-            # Ohne diesen Origin-Header lehnt die Doofinder-API die Anfrage ab (403).
-            "Origin": self.SHOP,
-            "Referer": self.SHOP + "/",
-        })
+    def __init__(self, max_parallel: int = 3):
+        super().__init__(max_parallel)
+        # Jeder Arbeits-Thread bekommt seine eigene Verbindung (thread-sicher).
+        self._lokal = threading.local()
+
+    @property
+    def session(self) -> requests.Session:
+        s = getattr(self._lokal, "session", None)
+        if s is None:
+            s = requests.Session()
+            s.headers.update({
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+                ),
+                "Accept-Language": "de-DE,de;q=0.9",
+                # Ohne diesen Origin-Header lehnt die Doofinder-API die Anfrage ab (403).
+                "Origin": self.SHOP,
+                "Referer": self.SHOP + "/",
+            })
+            self._lokal.session = s
+        return s
 
     def _suche(self, begriff: str) -> list[dict]:
         """Fragt die Doofinder-Suche ab und gibt die Trefferliste (als Liste von dicts) zurück."""

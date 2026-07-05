@@ -7,6 +7,7 @@
 #     (strukturierte Daten: meta[itemprop=price] und die Lieferinformation).
 
 import re
+import threading
 
 import requests
 from bs4 import BeautifulSoup
@@ -42,16 +43,25 @@ class ElektroLand24Adapter(ShopAdapter):
     versand_spedition = 99.00
     versandfrei_ab = 0.0  # keine offiziell belegte Gratis-Versand-Grenze
 
-    def __init__(self, pause: float = 0.5):
-        super().__init__(pause)
-        self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-            ),
-            "Accept-Language": "de-DE,de;q=0.9",
-        })
+    def __init__(self, max_parallel: int = 3):
+        super().__init__(max_parallel)
+        # Jeder Arbeits-Thread bekommt seine eigene Verbindung (thread-sicher).
+        self._lokal = threading.local()
+
+    @property
+    def session(self) -> requests.Session:
+        s = getattr(self._lokal, "session", None)
+        if s is None:
+            s = requests.Session()
+            s.headers.update({
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+                ),
+                "Accept-Language": "de-DE,de;q=0.9",
+            })
+            self._lokal.session = s
+        return s
 
     def _produkt_url(self, begriff: str) -> str | None:
         """Fragt den Such-Vorschlag ab und gibt den ersten echten Produktlink zurück."""

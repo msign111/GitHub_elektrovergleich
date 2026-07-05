@@ -18,3 +18,5 @@
 - Vergleichsseite komplett neu gestaltet: minimalistisches, modernes Design (Inter-Schrift, viel Weißraum, feine Trennlinien, Segmented-Control für die Versandart, „Günstigste Wahl"-Badge, Ersparnis-Chip, dezente Animationen)
 - Startseite im gleichen minimalistischen Design überarbeitet: Hero, zwei Karten (CSV-Upload mit Drag&Drop-Feld und Direkteingabe), einheitliche Schrift/Farben, Shop-Chips
 - Deployment vorbereitet (Render): feste Paketversionen, render.yaml, Procfile, .python-version, DEPLOY.md-Anleitung – Ziel-Domain macherelektro.de (IONOS)
+- LIVE gegangen: App läuft auf Render (Region Frankfurt) und ist unter https://www.macherelektro.de erreichbar (HTTPS aktiv); IONOS-DNS verbunden (A @ → 216.24.57.1, CNAME www → elektrovergleich.onrender.com). End-to-End auf der Live-Domain getestet
+- Tempo massiv verbessert: Shops parallel + Artikel je Shop parallel (kleiner Pool) + 10-Minuten-Zwischenspeicher. 4 Artikel: vorher ~6,5 s → jetzt ~1,9 s, wiederholter Vergleich ~0 s; Server bleibt während der Abfragen für andere Besucher ansprechbar

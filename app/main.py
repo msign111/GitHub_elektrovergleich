@@ -2,6 +2,7 @@
 # Hier wird FastAPI gestartet und die Seiten werden ausgeliefert.
 
 import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from fastapi import FastAPI, Request, UploadFile, File, Form
@@ -22,8 +23,8 @@ templates = Jinja2Templates(directory=str(TEMPLATE_ORDNER))
 
 # Liste der Shops, die abgefragt werden. Neue Shops kommen hier einfach dazu.
 SHOPS = [
-    ElektroWandeltAdapter(pause=0.5),
-    ElektroLand24Adapter(pause=0.5),
+    ElektroWandeltAdapter(),
+    ElektroLand24Adapter(),
 ]
 
 
@@ -72,8 +73,12 @@ def _vergleich_anzeigen(request: Request, positionen, quelle: str) -> HTMLRespon
         for s in SHOPS
     ]
 
-    # Für jeden Shop: Liste von Angeboten (gleiche Reihenfolge wie die Positionen)
-    angebote_je_shop = {_slug(s.name): s.get_offers(positionen) for s in SHOPS}
+    # Für jeden Shop: Liste von Angeboten (gleiche Reihenfolge wie die Positionen).
+    # Die Shops werden PARALLEL abgefragt – die Wartezeit ist dadurch nur so lang
+    # wie der langsamste Shop, nicht die Summe aller Shops.
+    with ThreadPoolExecutor(max_workers=max(len(SHOPS), 1)) as pool:
+        ergebnisse = pool.map(lambda s: (_slug(s.name), s.get_offers(positionen)), SHOPS)
+        angebote_je_shop = dict(ergebnisse)
 
     # Tabellenzeilen: Position + Angebote + Bild + Anzeigename
     zeilen = []
@@ -151,16 +156,20 @@ async def startseite(request: Request):
     return templates.TemplateResponse(request, "start.html")
 
 
+# Hinweis: Diese beiden Funktionen sind bewusst NICHT "async". FastAPI führt
+# normale Funktionen in einem Neben-Thread aus – so bleibt der Server für
+# andere Besucher ansprechbar, während er auf die Shop-Antworten wartet.
+
 @app.post("/warenkorb", response_class=HTMLResponse)
-async def warenkorb_hochladen(request: Request, datei: UploadFile = File(...)):
+def warenkorb_hochladen(request: Request, datei: UploadFile = File(...)):
     """Nimmt die hochgeladene CSV-Datei entgegen und zeigt den Preisvergleich."""
-    inhalt = await datei.read()
+    inhalt = datei.file.read()
     positionen = csv_einlesen(inhalt)
     return _vergleich_anzeigen(request, positionen, quelle=f"CSV-Datei: {datei.filename}")
 
 
 @app.post("/warenkorb-manuell", response_class=HTMLResponse)
-async def warenkorb_manuell(request: Request, eingabe: str = Form("")):
+def warenkorb_manuell(request: Request, eingabe: str = Form("")):
     """Nimmt direkt eingetippte Artikel/EANs entgegen und zeigt den Preisvergleich."""
     positionen = positionen_aus_text(eingabe)
     return _vergleich_anzeigen(request, positionen, quelle="Direkteingabe")
