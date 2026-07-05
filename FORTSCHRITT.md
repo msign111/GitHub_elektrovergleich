@@ -23,3 +23,6 @@
 - Dritter Shop Voltus angebunden (OXID/FactFinder): Suche per EAN + Herstellernummer, Preis/Verfügbarkeit, Warenkorb-Link, Versandkosten (Paket 6,90 / Sperrgut 29,90 / Spedition 77,00 €). Drei-Shop-Vergleich im Browser getestet
 - Elektroshop Wagner NICHT angebunden: aktiver Bot-Schutz (Akamai, alle Zugriffe 403); saubere Umgehung nicht möglich/gewollt. Legitimer Weg wäre ein offizieller Produktfeed (Affiliate-Netzwerk)
 - Neuer „Entdecken"-Bereich zum Stöbern: eigener, neutraler Kategoriebaum + Live-Suche mit Vorschlägen (Autocomplete); Produkte per Klick in die Auswahl legen und mit einem Klick vergleichen. Bewusst KEINE Kopie eines fremden Katalogs – alles on-demand/live
+- Direkteingabe (Variante 2) interaktiv gemacht: Artikelnummer/EAN einzeln eingeben → Bild, Name und Richtpreis werden angezeigt, Menge pro Artikel wählbar; die Liste geht per „Vergleich starten" in den Preisvergleich
+- Startseite neu geordnet: interaktive Artikel-Erfassung steht oben im Fokus, CSV-Upload darunter als Alternative; „Variante"-Beschriftungen entfernt
+- Startseite im Design überarbeitet (angelehnt an aktuelle Trends): große Typografie, dezente Hintergrund-Farbverläufe (Tiefe), dominante „schwebende" Hauptkarte mit Eyebrow-Label; CSV-Upload klein/kompakt als Alternative; mobil gestapelt
