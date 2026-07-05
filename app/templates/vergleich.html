@@ -141,6 +141,7 @@
 
         /* Warenkorb-Button */
         .korb-btn {
+            display: inline-block; text-align: center; text-decoration: none;
             margin-top: 16px; border: 1px solid var(--hairline); background: #fff; color: var(--text);
             border-radius: 999px; padding: 11px 20px; font: inherit; font-size: 14px; font-weight: 600;
             cursor: pointer; transition: border-color .2s, background .2s, opacity .2s, transform .12s;
@@ -288,7 +289,13 @@
                             {% if not vollstaendig[shop.slug] %}
                             <div class="unvollstaendig">nicht alle Artikel gefunden</div>
                             {% endif %}
-                            <div><button type="button" class="korb-btn" data-shop="{{ shop.slug }}">Zum Warenkorb</button></div>
+                            <div>
+                                {% if shop.warenkorb_typ == 'shopware' %}
+                                <button type="button" class="korb-btn" data-shop="{{ shop.slug }}">Zum Warenkorb</button>
+                                {% else %}
+                                <a class="korb-btn korb-link" data-shop="{{ shop.slug }}" href="{{ shop.website }}" target="_blank" rel="noopener">Zum Warenkorb</a>
+                                {% endif %}
+                            </div>
                         </td>
                         {% endfor %}
                     </tr>
@@ -355,16 +362,26 @@
                 return items;
             }
 
+            // OXID: den Warenkorb-Link (echtes <a>) mit den aktuellen Mengen befüllen
+            function oxidKorbUrl(slug) {
+                const cfg = KORB[slug];
+                const items = artikelFuerShop(slug);
+                if (!cfg || items.length === 0) return cfg ? cfg.website : "#";
+                const teile = items.map(i => "aproducts%5B" + encodeURIComponent(i.pid) + "%5D%5Bam%5D=" + i.menge);
+                return cfg.warenkorb_endpunkt + "?cl=basket&fnc=tobasket&" + teile.join("&");
+            }
+            function korbLinksAktualisieren() {
+                document.querySelectorAll("a.korb-link").forEach(a => { a.href = oxidKorbUrl(a.dataset.shop); });
+            }
+
+            // Shopware (elektroland24): per verstecktem Formular (POST) befüllen
             function warenkorbOeffnen(slug) {
                 const cfg = KORB[slug];
                 if (!cfg) return;
                 const items = artikelFuerShop(slug);
                 if (items.length === 0) { window.open(cfg.website, "_blank"); return; }
 
-                if (cfg.warenkorb_typ === "oxid") {
-                    const teile = items.map(i => "aproducts%5B" + encodeURIComponent(i.pid) + "%5D%5Bam%5D=" + i.menge);
-                    window.open(cfg.warenkorb_endpunkt + "?cl=basket&fnc=tobasket&" + teile.join("&"), "_blank");
-                } else if (cfg.warenkorb_typ === "shopware") {
+                if (cfg.warenkorb_typ === "shopware") {
                     const form = document.createElement("form");
                     form.method = "post"; form.action = cfg.warenkorb_endpunkt; form.target = "_blank";
                     const feld = (n, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; form.appendChild(i); };
@@ -441,12 +458,20 @@
                         sv.textContent = "";
                     }
                 });
+
+                // Warenkorb-Links (OXID) mit aktuellen Mengen aktualisieren
+                korbLinksAktualisieren();
             }
 
             // Klicks: Warenkorb-Button und Mengen-Stepper
             tabelle.addEventListener("click", function (e) {
                 const korb = e.target.closest(".korb-btn");
-                if (korb) { warenkorbOeffnen(korb.dataset.shop); return; }
+                if (korb) {
+                    // Echte Links (OXID: Wandelt, Voltus) öffnen selbst – nichts abfangen.
+                    // Nur Formular-Shops (Shopware: elektroland24) per JS abschicken.
+                    if (korb.tagName !== "A") warenkorbOeffnen(korb.dataset.shop);
+                    return;
+                }
 
                 const btn = e.target.closest("button.plus, button.minus");
                 if (!btn) return;

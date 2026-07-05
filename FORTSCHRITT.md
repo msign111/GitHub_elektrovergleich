@@ -29,3 +29,4 @@
 - Autovervollständigung im Erfassungsfeld: Vorschläge (Bild, Name, Preis) beim Tippen von Marke/Bezeichnung/EAN/Artikelnummer, nach Relevanz/Verkaufsrang sortiert; Klick übernimmt den Artikel mit präziser Artikelnummer/EAN
 - Passwortschutz für die ganze Seite (Login-Seite + Cookie); Passwort „elektrohase", überschreibbar per Umgebungsvariable SEITEN_PASSWORT
 - Frischer Stil (Hintergrund-Verläufe, größere Überschrift) auch auf die Vergleichsseite angewendet
+- Warenkorb-Fix für OXID-Shops (Wandelt, Voltus): „Zum Warenkorb" ist jetzt ein echter Link statt window.open – so blockiert kein Popup-Blocker mehr den Aufruf (v. a. beim zweiten Klick). Link-Adresse aktualisiert sich mit der Menge; elektroland24 bleibt beim Formular (POST)
