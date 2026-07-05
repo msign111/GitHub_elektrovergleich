@@ -13,6 +13,7 @@ from app.csv_import import csv_einlesen
 from app.eingabe import positionen_aus_text
 from app.adapter.elektro_wandelt import ElektroWandeltAdapter
 from app.adapter.elektroland24 import ElektroLand24Adapter
+from app.adapter.voltus import VoltusAdapter
 
 # Die App anlegen – der Titel erscheint z. B. in der automatischen Doku
 app = FastAPI(title="Vergleichsplattform für Elektromaterial")
@@ -25,6 +26,7 @@ templates = Jinja2Templates(directory=str(TEMPLATE_ORDNER))
 SHOPS = [
     ElektroWandeltAdapter(),
     ElektroLand24Adapter(),
+    VoltusAdapter(),
 ]
 
 
