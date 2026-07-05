@@ -82,11 +82,11 @@ class ElektroWandeltAdapter(ShopAdapter):
             self._lokal.session = s
         return s
 
-    def _suche(self, begriff: str) -> list[dict]:
+    def _suche(self, begriff: str, rpp: int = 5) -> list[dict]:
         """Fragt die Doofinder-Suche ab und gibt die Trefferliste (als Liste von dicts) zurück."""
         antwort = self.session.get(
             self.SUCH_URL,
-            params={"query": begriff, "rpp": 5},
+            params={"query": begriff, "rpp": rpp},
             timeout=20,
         )
         if antwort.status_code != 200:
@@ -95,6 +95,30 @@ class ElektroWandeltAdapter(ShopAdapter):
             return antwort.json().get("results", [])
         except ValueError:
             return []
+
+    def produktliste(self, begriff: str, anzahl: int = 24) -> list[dict]:
+        """
+        Liefert eine Liste von Produkten zu einem Suchbegriff (für Stöbern/Suche).
+        Jeder Eintrag: titel, artikelnummer, ean, preis, bild, link, verfuegbarkeit.
+        Nutzt denselben schnellen Such-Dienst wie die Preisabfrage.
+        """
+        liste = []
+        for t in self._suche(begriff.strip(), rpp=anzahl):
+            preis = _zu_float(t.get("sale_price"))
+            if preis is None:
+                preis = _zu_float(t.get("best_price"))
+            if preis is None:
+                preis = _zu_float(t.get("price"))
+            liste.append({
+                "titel": (t.get("title") or "").strip(),
+                "artikelnummer": (t.get("mpn") or "").strip(),
+                "ean": (t.get("gtin") or "").strip(),
+                "preis": preis,
+                "bild": (t.get("image_link") or "").strip(),
+                "link": (t.get("link") or "").strip(),
+                "verfuegbarkeit": (t.get("availability") or "").strip(),
+            })
+        return liste
 
     def _passt_genau(self, treffer: dict, position: Position) -> bool:
         """Prüft, ob ein Treffer sicher zur Position passt (EAN oder Herstellernummer identisch)."""

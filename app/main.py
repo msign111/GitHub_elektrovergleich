@@ -6,11 +6,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from fastapi import FastAPI, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from app.csv_import import csv_einlesen
 from app.eingabe import positionen_aus_text
+from app.katalog import KATEGORIEN
 from app.adapter.elektro_wandelt import ElektroWandeltAdapter
 from app.adapter.elektroland24 import ElektroLand24Adapter
 from app.adapter.voltus import VoltusAdapter
@@ -28,6 +29,9 @@ SHOPS = [
     ElektroLand24Adapter(),
     VoltusAdapter(),
 ]
+
+# Schnelle Datenquelle fürs Stöbern/Suchen (liefert ganze Produktlisten).
+KATALOG_QUELLE = next((s for s in SHOPS if hasattr(s, "produktliste")), SHOPS[0])
 
 
 def _slug(text: str) -> str:
@@ -156,6 +160,21 @@ def _vergleich_anzeigen(request: Request, positionen, quelle: str) -> HTMLRespon
 async def startseite(request: Request):
     """Liefert die Startseite mit CSV-Upload und Direkteingabe aus."""
     return templates.TemplateResponse(request, "start.html")
+
+
+@app.get("/entdecken", response_class=HTMLResponse)
+async def entdecken(request: Request):
+    """Stöber-Seite: eigener Kategoriebaum + Live-Suche."""
+    return templates.TemplateResponse(request, "entdecken.html", {"kategorien": KATEGORIEN})
+
+
+@app.get("/api/suche")
+async def api_suche(q: str = ""):
+    """Liefert eine Produktliste (JSON) zu einem Suchbegriff – für Stöbern und Autovervollständigung."""
+    begriff = (q or "").strip()
+    if len(begriff) < 2:
+        return JSONResponse([])
+    return JSONResponse(KATALOG_QUELLE.produktliste(begriff, anzahl=24))
 
 
 # Hinweis: Diese beiden Funktionen sind bewusst NICHT "async". FastAPI führt

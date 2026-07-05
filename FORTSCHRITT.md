@@ -22,3 +22,4 @@
 - Tempo massiv verbessert: Shops parallel + Artikel je Shop parallel (kleiner Pool) + 10-Minuten-Zwischenspeicher. 4 Artikel: vorher ~6,5 s → jetzt ~1,9 s, wiederholter Vergleich ~0 s; Server bleibt während der Abfragen für andere Besucher ansprechbar
 - Dritter Shop Voltus angebunden (OXID/FactFinder): Suche per EAN + Herstellernummer, Preis/Verfügbarkeit, Warenkorb-Link, Versandkosten (Paket 6,90 / Sperrgut 29,90 / Spedition 77,00 €). Drei-Shop-Vergleich im Browser getestet
 - Elektroshop Wagner NICHT angebunden: aktiver Bot-Schutz (Akamai, alle Zugriffe 403); saubere Umgehung nicht möglich/gewollt. Legitimer Weg wäre ein offizieller Produktfeed (Affiliate-Netzwerk)
+- Neuer „Entdecken"-Bereich zum Stöbern: eigener, neutraler Kategoriebaum + Live-Suche mit Vorschlägen (Autocomplete); Produkte per Klick in die Auswahl legen und mit einem Klick vergleichen. Bewusst KEINE Kopie eines fremden Katalogs – alles on-demand/live
