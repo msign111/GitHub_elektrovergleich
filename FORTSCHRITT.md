@@ -4,6 +4,13 @@
 > Claude Code ergänzt hier nach jedem abgeschlossenen Schritt eine Zeile (Datum + was gemacht wurde).
 > Dient als Brücke zu Kis Wissens-Gedächtnis (Obsidian).
 
+## 2026-07-09
+- Vierter Shop angebunden: **Elektroshop Wagner** (`app/adapter/wagner.py`). Preise/Verfügbarkeit/Produktlinks kommen über die offene Algolia-Suche des Shops (die Shop-Seiten selbst blocken automatisierte Zugriffe). Kein Warenkorb-Vorbefüllen möglich – dafür zeigt die Vergleichsseite bei solchen Shops jetzt „Zum Shop". Versand: Paket 4,95 €, Spedition ab 39,95 €. Live getestet: Vergleich mit 4 Shops funktioniert, Wagner war im Test die günstigste Wahl.
+
+## 2026-07-08
+- Marken-Monitor (täglicher Crawler + Dashboard) in ein eigenes, getrenntes Projekt ausgelagert: `C:\Dev\wandelt-marken-monitor` (Crawling über n8n-Cloud, Daten in Google-Tabelle, Dashboard als HTML-Datei). Die zuerst hier eingebauten Reste (`crawler_topartikel.py`, Seite `/dashboard`) wurden wieder entfernt, damit dieses Projekt nur die reine Preisvergleich-App bleibt.
+- Oraya-Auswertung aktualisiert: aktuelle Verkaufszahlen aller 214 Artikel bei Elektro-Wandelt abgefragt (Doofinder-Feld „verkaufsrang" = „wurde bereits X mal gekauft") und neue Excel mit Markenvergleich + Platzierungs-Diagramm erstellt (Downloads\Oraya Auswertung Update 08.07.2026.xlsx). Ergebnis: Merten wächst mit +50 % seit Feb. 2024 am stärksten.
+
 ## 2026-07-05
 - Grundgerüst mit FastAPI-Startseite
 - CSV-Upload und Warenkorb-Anzeige

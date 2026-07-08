@@ -292,8 +292,11 @@
                             <div>
                                 {% if shop.warenkorb_typ == 'shopware' %}
                                 <button type="button" class="korb-btn" data-shop="{{ shop.slug }}">Zum Warenkorb</button>
-                                {% else %}
+                                {% elif shop.warenkorb_typ == 'oxid' %}
                                 <a class="korb-btn korb-link" data-shop="{{ shop.slug }}" href="{{ shop.website }}" target="_blank" rel="noopener">Zum Warenkorb</a>
+                                {% else %}
+                                {# Shop ohne Warenkorb-Vorbefüllung: einfacher Link zum Shop #}
+                                <a class="korb-btn" data-shop="{{ shop.slug }}" href="{{ shop.website }}" target="_blank" rel="noopener">Zum Shop</a>
                                 {% endif %}
                             </div>
                         </td>

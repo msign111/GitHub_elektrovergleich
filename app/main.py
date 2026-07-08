@@ -17,6 +17,7 @@ from app.katalog import KATEGORIEN
 from app.adapter.elektro_wandelt import ElektroWandeltAdapter
 from app.adapter.elektroland24 import ElektroLand24Adapter
 from app.adapter.voltus import VoltusAdapter
+from app.adapter.wagner import ElektroshopWagnerAdapter
 
 # Die App anlegen – der Titel erscheint z. B. in der automatischen Doku
 app = FastAPI(title="Vergleichsplattform für Elektromaterial")
@@ -30,6 +31,7 @@ SHOPS = [
     ElektroWandeltAdapter(),
     ElektroLand24Adapter(),
     VoltusAdapter(),
+    ElektroshopWagnerAdapter(),
 ]
 
 # Schnelle Datenquelle fürs Stöbern/Suchen (liefert ganze Produktlisten).
