@@ -55,10 +55,11 @@ class ElektroshopWagnerAdapter(ShopAdapter):
 
     name = "Elektroshop Wagner"
     website = "https://www.elektroshopwagner.de"
-    # Kein Vorbefüllen des Warenkorbs möglich – die Vergleichsseite zeigt
-    # stattdessen den Link zum Shop bzw. zum Produkt.
-    warenkorb_typ = ""
-    warenkorb_endpunkt = ""
+    # Der Shop (Gambio) kann nur EINEN Artikel pro Aufruf in den Warenkorb
+    # legen (kein Sammel-Warenkorb wie OXID/Shopware). Deshalb Typ "einzeln":
+    # die Vergleichsseite zeigt je Artikel einen "In den Warenkorb"-Knopf.
+    warenkorb_typ = "einzeln"
+    warenkorb_endpunkt = "https://www.elektroshopwagner.de/de/?action=add_product"
     # Versandkosten Deutschland (Quelle: elektroshopwagner.de, Seite
     # "Liefer- und Versandbedingungen", Stand 07/2026: Paketdienst 4,95 €,
     # Spedition "nach Volumengewicht ab 39,95 €")

@@ -5,6 +5,7 @@
 > Dient als Brücke zu Kis Wissens-Gedächtnis (Obsidian).
 
 ## 2026-07-09
+- Wagner-Warenkorb: Der Shop (Gambio) kann nur EINEN Artikel pro Aufruf aufnehmen (kein Sammel-Warenkorb wie OXID/Shopware, getestet). Deshalb neuer Warenkorb-Typ „einzeln": In der Wagner-Spalte hat jetzt jeder Artikel einen eigenen „In den Warenkorb"-Knopf (öffnet Wagner im neuen Tab mit genau diesem Artikel + Menge). Footer bleibt „Zum Shop".
 - Vierter Shop angebunden: **Elektroshop Wagner** (`app/adapter/wagner.py`). Preise/Verfügbarkeit/Produktlinks kommen über die offene Algolia-Suche des Shops (die Shop-Seiten selbst blocken automatisierte Zugriffe). Kein Warenkorb-Vorbefüllen möglich – dafür zeigt die Vergleichsseite bei solchen Shops jetzt „Zum Shop". Versand: Paket 4,95 €, Spedition ab 39,95 €. Live getestet: Vergleich mit 4 Shops funktioniert, Wagner war im Test die günstigste Wahl.
 
 ## 2026-07-08

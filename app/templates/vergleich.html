@@ -123,6 +123,11 @@
         .avail.no .dot { background: #cfcfd4; }
         .prodlink { display: inline-block; margin-top: 11px; color: var(--muted); font-size: 12.5px; text-decoration: none; transition: color .2s; }
         .prodlink:hover { color: var(--text); }
+        .einzel-korb { display: inline-block; margin-top: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600;
+            color: var(--text); background: #fff; border: 1px solid var(--hairline); border-radius: 999px; cursor: pointer; transition: border-color .2s, background .2s; }
+        .einzel-korb:hover { border-color: #c9c9ce; background: var(--surface); }
+        .einzel-korb:active { transform: scale(.97); }
+        .shop-col.is-best .einzel-korb { border-color: var(--primary); }
         .missing { color: #a1a1aa; font-size: 13px; }
 
         /* Summenzeile */
@@ -266,6 +271,9 @@
                                 </div>
                                 {% if a.produktlink %}
                                 <div><a class="prodlink" href="{{ a.produktlink }}" target="_blank" rel="noopener">Zum Produkt ↗</a></div>
+                                {% endif %}
+                                {% if shop.warenkorb_typ == 'einzeln' and a.shop_produkt_id %}
+                                <div><button type="button" class="einzel-korb" data-shop="{{ shop.slug }}" data-pid="{{ a.shop_produkt_id }}">In den Warenkorb ↗</button></div>
                                 {% endif %}
                             {% else %}
                                 <div class="missing">nicht gefunden</div>
@@ -466,8 +474,32 @@
                 korbLinksAktualisieren();
             }
 
+            // Einzel-Artikel in den Warenkorb legen (Wagner/Gambio: nur 1 Artikel
+            // pro Aufruf). Öffnet den Shop in einem neuen Tab mit genau diesem
+            // Artikel und der aktuell gewählten Menge im Warenkorb.
+            function einzelArtikelInKorb(slug, pid, menge) {
+                const cfg = KORB[slug];
+                if (!cfg || !pid) return;
+                const form = document.createElement("form");
+                form.method = "post";
+                form.action = cfg.warenkorb_endpunkt;
+                form.target = "_blank";
+                const feld = (n, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; form.appendChild(i); };
+                feld("products_id", pid);
+                feld("products_qty", menge);
+                document.body.appendChild(form); form.submit(); form.remove();
+            }
+
             // Klicks: Warenkorb-Button und Mengen-Stepper
             tabelle.addEventListener("click", function (e) {
+                const einzel = e.target.closest(".einzel-korb");
+                if (einzel) {
+                    const tr = einzel.closest("tr[data-row]");
+                    const menge = tr ? (parseInt(tr.querySelector(".menge-wert").dataset.menge, 10) || 1) : 1;
+                    einzelArtikelInKorb(einzel.dataset.shop, einzel.dataset.pid, menge);
+                    return;
+                }
+
                 const korb = e.target.closest(".korb-btn");
                 if (korb) {
                     // Echte Links (OXID: Wandelt, Voltus) öffnen selbst – nichts abfangen.
