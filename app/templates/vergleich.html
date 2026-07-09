@@ -383,6 +383,69 @@
                 document.querySelectorAll("a.korb-link").forEach(a => { a.href = oxidKorbUrl(a.dataset.shop); });
             }
 
+            // Wagner (Gambio): eigene "wird vorbereitet"-Seite in einem neuen Tab.
+            // Sie weckt Wagner im Hintergrund (Sitzungs-Cookie, SameSite=None) und
+            // schickt den Warenkorb erst nach einem Zeitpuffer ab -> der Kunde landet
+            // direkt auf dem gefüllten Warenkorb.
+            function warteSeiteWagner(cfg, items, slug) {
+                const prime = cfg.website + "/de/";
+                // Wagner schon von der Vergleichsseite aus anstoßen (Cookie-Vorsprung)
+                try { fetch(prime, { mode: "no-cors", credentials: "include" }).catch(function () {}); } catch (e) {}
+
+                // Tab SOFORT im Klick öffnen (sonst greift der Popup-Blocker)
+                const win = window.open("", "korb_" + slug);
+                if (!win) {
+                    // Popup blockiert: einfacher Fallback (öffnet den Warenkorb direkt)
+                    const f = document.createElement("form");
+                    f.method = "post"; f.action = cfg.warenkorb_endpunkt; f.target = "_blank";
+                    items.forEach(function (i) {
+                        const a = document.createElement("input"); a.type = "hidden"; a.name = "products_id[]"; a.value = i.pid; f.appendChild(a);
+                        const b = document.createElement("input"); b.type = "hidden"; b.name = "cart_quantity[]"; b.value = i.menge; f.appendChild(b);
+                    });
+                    document.body.appendChild(f); f.submit(); f.remove();
+                    return;
+                }
+
+                const felder = items.map(function (i) {
+                    return '<input type="hidden" name="products_id[]" value="' + i.pid + '">'
+                         + '<input type="hidden" name="cart_quantity[]" value="' + i.menge + '">';
+                }).join("");
+
+                const html = '<!doctype html><html lang="de"><head><meta charset="utf-8">'
+                  + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+                  + '<title>Warenkorb wird vorbereitet …</title><style>'
+                  + 'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f5f5f7;color:#0a0a0a;display:flex;min-height:100vh;align-items:center;justify-content:center}'
+                  + '.box{background:#fff;border-radius:18px;box-shadow:0 6px 30px rgba(0,0,0,.08);padding:40px 44px;max-width:440px;text-align:center}'
+                  + '.sp{width:44px;height:44px;border:4px solid #e6e6ea;border-top-color:#12a150;border-radius:50%;margin:0 auto 22px;animation:r 1s linear infinite}'
+                  + '@keyframes r{to{transform:rotate(360deg)}}'
+                  + 'h1{font-size:20px;margin:0 0 8px}p{color:#6b7280;font-size:15px;margin:0 0 20px;line-height:1.5}'
+                  + '.bar{height:6px;background:#ececee;border-radius:99px;overflow:hidden}'
+                  + '.bar>span{display:block;height:100%;width:0;background:#12a150;border-radius:99px}'
+                  + '</style></head><body><div class="box"><div class="sp"></div>'
+                  + '<h1>Dein Warenkorb wird vorbereitet</h1>'
+                  + '<p>Wir legen deine Artikel bei Elektroshop&nbsp;Wagner in den Warenkorb. Einen kurzen Moment …</p>'
+                  + '<div class="bar"><span id="bar"></span></div></div>'
+                  + '<img src="' + prime + '" alt="" style="display:none">'
+                  + '<form id="f" method="post" action="' + cfg.warenkorb_endpunkt + '">' + felder + '</form>'
+                  + '<scr' + 'ipt>'
+                  + 'try{fetch("' + prime + '",{mode:"no-cors",credentials:"include"}).catch(function(){});}catch(e){}'
+                  + 'var WART=4000,t0=Date.now();'
+                  + 'var iv=setInterval(function(){var p=Math.min(1,(Date.now()-t0)/WART);document.getElementById("bar").style.width=(p*100)+"%";if(p>=1)clearInterval(iv);},80);'
+                  + 'setTimeout(function(){document.getElementById("f").submit();},WART);'
+                  + '<\/scr' + 'ipt></body></html>';
+
+                win.document.open();
+                win.document.write(html);
+                win.document.close();
+
+                // kurzes Knopf-Feedback auf der Vergleichsseite
+                const knoepfe = document.querySelectorAll('.korb-btn[data-shop="' + slug + '"]');
+                knoepfe.forEach(function (k) { k.disabled = true; k.dataset.text = k.textContent; k.textContent = "Warenkorb wird geöffnet …"; });
+                setTimeout(function () {
+                    knoepfe.forEach(function (k) { k.disabled = false; k.textContent = k.dataset.text || "Zum Warenkorb"; });
+                }, 4500);
+            }
+
             // Shopware (elektroland24): per verstecktem Formular (POST) befüllen
             function warenkorbOeffnen(slug) {
                 const cfg = KORB[slug];
@@ -404,33 +467,17 @@
                     document.body.appendChild(form); form.submit(); form.remove();
                 } else if (cfg.warenkorb_typ === "gambio") {
                     // Gambio (Wagner): "Warenkorb aktualisieren" nimmt mehrere
-                    // Artikel in EINEM Aufruf an und legt sie auch neu an.
-                    // Besonderheit: Beim ALLERERSTEN Kontakt verwirft der Shop
-                    // Warenkorb-Aktionen und legt nur sein Sitzungs-Cookie an
-                    // (Bot-Schutz). Deshalb: Der Klick öffnet zuerst ganz normal
-                    // die Shop-STARTSEITE (dabei wird der Besucher "bekannt"),
-                    // danach schicken wir den Warenkorb in denselben Tab - der
-                    // Kunde sieht nie einen leeren Korb. Doppelt gesendet wird
-                    // zur Sicherheit; Mengen werden gesetzt, nicht addiert.
-                    const senden = () => {
-                        const form = document.createElement("form");
-                        form.method = "post"; form.action = cfg.warenkorb_endpunkt;
-                        form.target = "korb_" + slug;  // fester Tab, kein zweites Fenster
-                        const feld = (n, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; form.appendChild(i); };
-                        items.forEach(i => {
-                            feld("products_id[]", i.pid);
-                            feld("cart_quantity[]", i.menge);
-                        });
-                        document.body.appendChild(form); form.submit(); form.remove();
-                    };
-                    window.open(cfg.website + "/de/", "korb_" + slug);
-                    const knoepfe = document.querySelectorAll('.korb-btn[data-shop="' + slug + '"]');
-                    knoepfe.forEach(k => { k.disabled = true; k.dataset.text = k.textContent; k.textContent = "Korb wird gefüllt …"; });
-                    setTimeout(senden, 2500);
-                    setTimeout(() => {
-                        senden();
-                        knoepfe.forEach(k => { k.disabled = false; k.textContent = k.dataset.text || "Zum Warenkorb"; });
-                    }, 5500);
+                    // Artikel in EINEM Aufruf an. Problem: Beim allerersten Kontakt
+                    // verwirft der Shop die Aktion und legt nur sein Sitzungs-Cookie
+                    // an (Bot-Schutz) -> der erste Versuch käme leer an.
+                    // Lösung: Wir öffnen SOFORT (im Klick, sonst Popup-Blocker) einen
+                    // neuen Tab mit einer eigenen kurzen "wird vorbereitet"-Seite.
+                    // Diese Seite weckt Wagner im Hintergrund (Cookie wird gesetzt,
+                    // SameSite=None -> gilt auch für uns) und schickt den Warenkorb
+                    // erst nach einem Zeitpuffer ab. Der Kunde landet dann direkt
+                    // auf dem GEFÜLLTEN Warenkorb - ohne Startseiten-Umweg, ohne
+                    // leeren Korb. Idempotent (Mengen werden gesetzt, nicht addiert).
+                    warteSeiteWagner(cfg, items, slug);
                 } else {
                     window.open(cfg.website, "_blank");
                 }
