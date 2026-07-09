@@ -595,17 +595,59 @@
                 }
             }
 
+            // Spalten-Ranking: Die beste Wahl gleitet nach links (FLIP-Technik:
+            // alte Position merken, Zellen umhängen, dann animiert von der
+            // alten zur neuen Position gleiten lassen).
+            function spaltenSortieren(reihenfolge) {
+                const aktuell = Array.from(tabelle.querySelectorAll("thead th.shop-col")).map(th => th.dataset.shop);
+                if (reihenfolge.join() === aktuell.join()) return;   // Reihenfolge unverändert
+
+                const zellen = Array.from(tabelle.querySelectorAll("th.shop-col, td.shop-col"));
+                const vorher = new Map();
+                zellen.forEach(z => vorher.set(z, z.getBoundingClientRect().left));
+
+                // Zellen in jeder Zeile in der neuen Reihenfolge ans Ende hängen
+                // (die Artikel-Spalte bleibt vorn unberührt)
+                tabelle.querySelectorAll("tr").forEach(tr => {
+                    reihenfolge.forEach(slug => {
+                        const zelle = tr.querySelector(':scope > [data-shop="' + slug + '"]');
+                        if (zelle) tr.appendChild(zelle);
+                    });
+                });
+
+                // Von der alten Position zur neuen gleiten:
+                // 1) Zellen optisch auf die ALTE Position zurückversetzen
+                zellen.forEach(z => {
+                    const delta = vorher.get(z) - z.getBoundingClientRect().left;
+                    if (Math.abs(delta) < 1) return;
+                    z.style.transition = "none";
+                    z.style.transform = "translateX(" + delta + "px)";
+                });
+                // 2) Reflow erzwingen, damit die Startposition "steht"
+                void tabelle.offsetWidth;
+                // 3) Übergang aktivieren und zur neuen Position gleiten lassen
+                zellen.forEach(z => {
+                    z.style.transition = "transform .5s cubic-bezier(.22, .9, .3, 1)";
+                    z.style.transform = "";
+                });
+                setTimeout(function () {
+                    zellen.forEach(z => { z.style.transition = ""; z.style.transform = ""; });
+                }, 560);
+            }
+
             function neuBerechnen() {
                 const artikel = {};
                 const vollstaendig = {};
-                shops.forEach(s => { artikel[s] = 0; vollstaendig[s] = true; });
+                const lieferbarAlle = {};
+                shops.forEach(s => { artikel[s] = 0; vollstaendig[s] = true; lieferbarAlle[s] = true; });
 
                 tabelle.querySelectorAll("tbody tr[data-row]").forEach(tr => {
                     const menge = parseInt(tr.querySelector(".menge-wert").dataset.menge, 10) || 0;
                     tr.querySelectorAll("td.cell").forEach(td => {
                         const shop = td.dataset.shop;
                         const unit = td.dataset.unit;
-                        if (unit === "" || unit === undefined) { vollstaendig[shop] = false; return; }
+                        if (unit === "" || unit === undefined) { vollstaendig[shop] = false; lieferbarAlle[shop] = false; return; }
+                        if (td.querySelector(".avail.no")) lieferbarAlle[shop] = false;
                         const linie = parseFloat(unit) * menge;
                         const zs = td.querySelector(".zs-wert");
                         if (zs) {
@@ -665,6 +707,21 @@
 
                 // Warenkorb-Links (OXID) mit aktuellen Mengen aktualisieren
                 korbLinksAktualisieren();
+
+                // Spalten neu ranken: Prio 1 = alle Artikel sofort lieferbar,
+                // Prio 2 = alle gefunden, Prio 3 = Gesamtpreis (inkl. Versand).
+                // Ändert sich die Reihenfolge, gleiten die Spalten animiert um.
+                const reihenfolge = shops.slice().sort((a, b) => {
+                    const ta = (vollstaendig[a] && lieferbarAlle[a]) ? 0 : 1;
+                    const tb = (vollstaendig[b] && lieferbarAlle[b]) ? 0 : 1;
+                    if (ta !== tb) return ta - tb;
+                    const va = vollstaendig[a] ? 0 : 1, vb = vollstaendig[b] ? 0 : 1;
+                    if (va !== vb) return va - vb;
+                    const ga = artikel[a] > 0 ? gesamt[a] : Infinity;
+                    const gb = artikel[b] > 0 ? gesamt[b] : Infinity;
+                    return ga - gb;
+                });
+                spaltenSortieren(reihenfolge);
             }
 
             // Klicks: Warenkorb-Button und Mengen-Stepper

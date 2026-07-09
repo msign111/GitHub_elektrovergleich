@@ -156,23 +156,42 @@ def _vergleich_anzeigen(request: Request, positionen, quelle: str) -> HTMLRespon
     versand = {}
     gesamt_summen = {}
     vollstaendig = {}
+    lieferbar_alle = {}
     for shop in shops:
         slug = shop["slug"]
         total = 0.0
         alle_da = True
+        alle_lieferbar = True
         for zeile in zeilen:
             a = zeile["angebote"][slug]
             gp = a.gesamtpreis(zeile["position"].menge)
             if a.gefunden and gp is not None:
                 total += gp
+                if not a.lieferbar:
+                    alle_lieferbar = False
             else:
                 alle_da = False
+                alle_lieferbar = False
         # Anfangs mit Paketversand rechnen (der Umschalter ändert das später im Browser)
         v = _versand_betrag(shop, total, art="paket")
         artikel_summen[slug] = round(total, 2)
         versand[slug] = round(v, 2)
         gesamt_summen[slug] = round(total + v, 2)
         vollstaendig[slug] = alle_da
+        lieferbar_alle[slug] = alle_lieferbar
+
+    # Shops von links nach rechts RANKEN: Prio 1 = alle Artikel sofort
+    # lieferbar, Prio 2 = alle Artikel gefunden, Prio 3 = Gesamtpreis.
+    # Die beste Wahl steht damit immer direkt neben der Artikel-Spalte.
+    def _rang(shop: dict):
+        slug = shop["slug"]
+        preis = gesamt_summen[slug] if artikel_summen[slug] > 0 else float("inf")
+        return (
+            0 if (vollstaendig[slug] and lieferbar_alle[slug]) else 1,
+            0 if vollstaendig[slug] else 1,
+            preis,
+        )
+    shops.sort(key=_rang)
 
     # Günstigsten Shop bestimmen (inkl. Versand): bevorzugt einen, der ALLE Artikel hat
     kandidaten = [s["slug"] for s in shops if vollstaendig[s["slug"]] and artikel_summen[s["slug"]] > 0]

@@ -32,12 +32,11 @@
     .lade-shops span:nth-child(2) { animation-delay: .2s; }
     .lade-shops span:nth-child(3) { animation-delay: .4s; }
     .lade-shops span:nth-child(4) { animation-delay: .6s; }
-    /* Nur Deckkraft animieren: solche Animationen laufen auf dem Grafik-
-       Prozessor und bewegen sich auch dann weiter, wenn der Browser
-       (v. a. iPhone) beim Laden der nächsten Seite JavaScript einfriert. */
+    /* Grünes Pulsieren: Da der Vergleich im Hintergrund geladen wird
+       (die Seite bleibt lebendig), dürfen auch Farben animiert werden. */
     @keyframes lade-pulsieren {
         0%, 100% { opacity: .35; }
-        50% { opacity: 1; }
+        50% { opacity: 1; color: #12a150; border-color: #12a150; }
     }
     .lade-balken { height: 6px; background: #f5f5f7; border-radius: 99px; overflow: hidden; }
     .lade-balken > span {
@@ -53,6 +52,17 @@
     @keyframes lade-fuellen {
         from { transform: scaleX(0); }
         to { transform: scaleX(.94); }
+    }
+    /* iPhone-Einstellung "Bewegung reduzieren": Die Seiten schalten damit
+       ALLE Animationen ab - die Lade-Anzeige wirkte dann wie eingefroren.
+       Lade-Feedback ist aber FUNKTION (nicht Dekoration), deshalb wird es
+       hier gezielt wieder eingeschaltet. */
+    @media (prefers-reduced-motion: reduce) {
+        .lade-spinner { animation: lade-drehen 1s linear infinite !important; }
+        .lade-shops span { animation: lade-pulsieren 1.6s ease-in-out infinite !important; }
+        .lade-schleier.aktiv .lade-balken > span {
+            animation: lade-fuellen 9s cubic-bezier(.15, .6, .3, 1) forwards !important;
+        }
     }
 </style>
 
