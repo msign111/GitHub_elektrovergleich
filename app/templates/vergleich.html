@@ -406,10 +406,12 @@
                     // Gambio (Wagner): "Warenkorb aktualisieren" nimmt mehrere
                     // Artikel in EINEM Aufruf an und legt sie auch neu an.
                     // Besonderheit: Beim ALLERERSTEN Kontakt verwirft der Shop
-                    // die Aktion und legt nur sein Sitzungs-Cookie an (Bot-Schutz).
-                    // Deshalb senden wir das Formular automatisch ZWEIMAL in
-                    // denselben Tab - die Mengen werden gesetzt (nicht addiert),
-                    // doppelt senden ist also unschädlich.
+                    // Warenkorb-Aktionen und legt nur sein Sitzungs-Cookie an
+                    // (Bot-Schutz). Deshalb: Der Klick öffnet zuerst ganz normal
+                    // die Shop-STARTSEITE (dabei wird der Besucher "bekannt"),
+                    // danach schicken wir den Warenkorb in denselben Tab - der
+                    // Kunde sieht nie einen leeren Korb. Doppelt gesendet wird
+                    // zur Sicherheit; Mengen werden gesetzt, nicht addiert.
                     const senden = () => {
                         const form = document.createElement("form");
                         form.method = "post"; form.action = cfg.warenkorb_endpunkt;
@@ -421,10 +423,7 @@
                         });
                         document.body.appendChild(form); form.submit(); form.remove();
                     };
-                    senden();
-                    // Knopf kurz sperren und ZWEIMAL erneut senden (2,5 s und
-                    // 5,5 s) - doppelte Sicherheit, falls die erste Antwort des
-                    // Shops langsam kommt. Mengen werden gesetzt, nicht addiert.
+                    window.open(cfg.website + "/de/", "korb_" + slug);
                     const knoepfe = document.querySelectorAll('.korb-btn[data-shop="' + slug + '"]');
                     knoepfe.forEach(k => { k.disabled = true; k.dataset.text = k.textContent; k.textContent = "Korb wird gefüllt …"; });
                     setTimeout(senden, 2500);

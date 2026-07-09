@@ -5,6 +5,7 @@
 > Dient als Brücke zu Kis Wissens-Gedächtnis (Obsidian).
 
 ## 2026-07-09
+- Wagner-Warenkorb, kein leerer Korb mehr für den Kunden: Der Klick öffnet jetzt zuerst die Wagner-Startseite im Zieltab (dabei „lernt" der Shop den Besucher kennen = Sitzungs-Cookie), danach wird der Warenkorb in denselben Tab gefüllt (nach 2,5 s, Sicherheits-Wiederholung nach 5,5 s). So sieht der Nutzer eine normale Shop-Seite statt „Warenkorb ist leer".
 - Wagner-Suche verbessert: Artikel, die Wagner unter der langen Herstellernummer führt (z. B. Busch-Jaeger 2CKA…), während wir nur die kurze Handelsnummer haben (z. B. 2531-914), werden jetzt zusätzlich über den Produktnamen erkannt (Nummern ab 6 Zeichen). Behebt „nicht gefunden" für Artikel, die im Shop existieren.
 - Wagner-Warenkorb: Nachsenden verstärkt – das Formular wird jetzt zweimal automatisch nachgesendet (nach 2,5 s und 5,5 s statt einmal nach 3 s), falls die erste Shop-Antwort langsam kommt.
 - Wagner-Warenkorb, Feinschliff nach Live-Test: Beim allerersten Besuch verwirft der Shop die Warenkorb-Aktion und legt nur sein Sitzungs-Cookie an (Bot-Schutz) – der erste Klick zeigte deshalb einen leeren Korb. Lösung: Der Knopf sendet das Formular automatisch zweimal (2. Sendung nach 3 s in denselben Tab); da Mengen gesetzt statt addiert werden, ist das doppelte Senden unschädlich. Knopf zeigt währenddessen „Korb wird gefüllt …".
