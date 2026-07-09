@@ -34,7 +34,9 @@
             -webkit-font-smoothing: antialiased;
             text-rendering: optimizeLegibility;
             position: relative;
-            overflow-x: hidden;
+            /* "clip" statt "hidden": schneidet genauso ab, macht aber
+               position:sticky (klebende Kopfzeile) nicht kaputt */
+            overflow-x: clip;
         }
         /* weiche Farbverläufe im Hintergrund (wie Startseite) */
         body::before { content: ""; position: fixed; top: -240px; right: -180px; width: 680px; height: 680px; z-index: 0;
@@ -69,14 +71,19 @@
         .segmented button:hover { color: var(--text); }
         .segmented button.active { background: #fff; color: var(--text); box-shadow: var(--shadow-sm); }
 
-        /* Tabelle */
-        .table-wrap { overflow-x: auto; margin-top: 14px; }
+        /* Tabelle
+           Große Bildschirme: Tabelle passt nebeneinander, die Kopfzeile mit den
+           Shop-Namen KLEBT beim Runterscrollen oben am Fenster (position:sticky).
+           Kleine Bildschirme (Handy): die Tabelle bekommt ihren eigenen
+           Scroll-Bereich mit "eingefrorener" Kopfzeile UND Artikel-Spalte –
+           so bleiben Shop-Namen und Artikel beim Scrollen immer sichtbar. */
+        .table-wrap { overflow: visible; margin-top: 14px; }
         table.vergleich { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 660px; }
         table.vergleich th, table.vergleich td { padding: 22px 18px; text-align: center; vertical-align: top; }
 
         /* Shop-Spalten */
         .shop-col { transition: background .25s ease; }
-        thead th.shop-col { position: sticky; top: 0; background: var(--bg); z-index: 3; padding-top: 14px; padding-bottom: 18px; }
+        thead th.shop-col { position: sticky; top: 0; background: var(--bg); z-index: 3; padding-top: 14px; padding-bottom: 18px; box-shadow: 0 1px 0 var(--hairline); }
         thead th.shop-col.is-best { background: var(--accent-weak); border-radius: var(--radius) var(--radius) 0 0; }
         td.shop-col.is-best { background: var(--accent-weak); }
         tfoot td.shop-col.is-best { border-radius: 0 0 var(--radius) var(--radius); }
@@ -91,7 +98,7 @@
 
         /* Produktspalte */
         td.produkt { text-align: left; width: 340px; }
-        thead td.produkt, thead th.corner { background: var(--bg); position: sticky; top: 0; z-index: 2; }
+        thead td.produkt, thead th.corner { background: var(--bg); position: sticky; top: 0; z-index: 2; box-shadow: 0 1px 0 var(--hairline); }
         .prod { display: flex; gap: 15px; align-items: center; }
         .prod-img {
             width: 66px; height: 66px; border-radius: 14px; background: var(--surface);
@@ -156,12 +163,16 @@
         .back { display: inline-block; margin-top: 26px; color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none; }
         .back:hover { color: var(--accent); }
 
-        /* dezente Einblend-Animation */
+        /* dezente Einblend-Animation
+           Wichtig: Tabelle und Zeilen dürfen NICHT per transform animiert
+           werden - ein transform würde die klebende Kopfzeile/Spalte
+           (position: sticky) aushebeln. Deshalb dort nur weiches Einblenden. */
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        .hero, .controls, .table-wrap, .fineprint { animation: fadeUp .5s ease both; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .hero, .controls, .fineprint { animation: fadeUp .5s ease both; }
         .controls { animation-delay: .05s; }
-        .table-wrap { animation-delay: .1s; }
-        tbody tr { animation: fadeUp .5s ease both; }
+        .table-wrap { animation: fadeIn .5s ease both; animation-delay: .1s; }
+        tbody tr { animation: fadeIn .5s ease both; }
         tbody tr:nth-child(1) { animation-delay: .12s; }
         tbody tr:nth-child(2) { animation-delay: .17s; }
         tbody tr:nth-child(3) { animation-delay: .22s; }
@@ -169,10 +180,51 @@
         tbody tr:nth-child(5) { animation-delay: .32s; }
         tbody tr:nth-child(n+6) { animation-delay: .37s; }
 
-        @media (max-width: 620px) {
+        /* ---- Handy / schmale Bildschirme: "eingefrorene" Tabelle ---- */
+        @media (max-width: 899px) {
             .hero h1 { font-size: 32px; }
             .wrap { padding: 0 16px 60px; }
-            td.produkt { width: 240px; }
+
+            /* Die Tabelle bekommt einen eigenen Scroll-Kasten (beide Richtungen).
+               Dadurch funktionieren klebende Kopfzeile UND klebende Artikel-Spalte. */
+            .table-wrap {
+                overflow: auto;
+                max-height: calc(100dvh - 12px);
+                -webkit-overflow-scrolling: touch;
+                border: 1px solid var(--hairline);
+                border-radius: var(--radius);
+                background: var(--bg);
+            }
+            table.vergleich { min-width: 0; }
+            table.vergleich th, table.vergleich td { padding: 14px 12px; }
+
+            /* Artikel-Spalte links festkleben (bleibt beim Seitwärtsscrollen stehen) */
+            td.produkt, th.corner {
+                position: sticky; left: 0; z-index: 2;
+                background: var(--bg);
+                box-shadow: 1px 0 0 var(--hairline);
+            }
+            th.corner { z-index: 4; top: 0; }           /* Ecke: über Kopfzeile UND Spalte */
+            thead th.shop-col { z-index: 3; }
+
+            /* Kompaktere Artikel-Spalte */
+            td.produkt { width: 172px; min-width: 172px; max-width: 172px; }
+            .prod { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .prod-img { width: 48px; height: 48px; border-radius: 10px; padding: 5px; }
+            .prod-name { font-size: 12.5px; }
+            .prod-meta { font-size: 10.5px; word-break: break-word; }
+            .stepper { margin-top: 9px; }
+            .stepper button { width: 27px; height: 27px; font-size: 15px; }
+            .stepper .menge-wert { min-width: 32px; font-size: 13px; }
+
+            /* Kompaktere Shop-Spalten */
+            td.cell, tfoot td.shop-col { min-width: 150px; }
+            .shop-name { font-size: 14px; }
+            .best-badge { font-size: 10.5px; padding: 3px 9px; }
+            .price { font-size: 19px; }
+            .avail { white-space: nowrap; font-size: 11px; padding: 5px 9px; margin-top: 10px; }
+            .sum-total { font-size: 20px; }
+            .korb-btn { padding: 10px 14px; font-size: 13px; }
         }
         @media (prefers-reduced-motion: reduce) {
             * { animation: none !important; transition: none !important; }
@@ -406,7 +458,7 @@
             //     hier bereits den vollen Korb.
             //  2) Wir beobachten, wann Wagners Antwort im Tab WIRKLICH angekommen
             //     ist (der Tab wird dann "fremd" -> Zugriff wirft einen Fehler),
-            //     warten 2 s Puffer und senden denselben Korb NOCH EINMAL
+            //     warten 1,5 s Puffer und senden denselben Korb NOCH EINMAL
             //     (POST Nr. 2). Beim allerersten Besuch verwirft Wagner Nr. 1 und
             //     erst Nr. 2 füllt den Korb. Doppelt senden ist unschädlich:
             //     Die Aktion SETZT Mengen, sie addiert nicht.
@@ -439,7 +491,7 @@
                 // POST Nr. 1: sofort senden (legt die Wagner-Sitzung an)
                 wagnerKorbSenden(cfg, items, name);
 
-                // POST Nr. 2: erst wenn Wagners Antwort da ist + 2 s Puffer
+                // POST Nr. 2: erst wenn Wagners Antwort da ist + 1,5 s Puffer
                 let zweiterGesendet = false;
                 function zweitesSenden() {
                     if (zweiterGesendet || win.closed) return;
@@ -453,7 +505,9 @@
                     try { void win.document; } catch (e) { angekommen = true; }
                     if (angekommen || Date.now() - start > 8000) {
                         clearInterval(pruefer);
-                        setTimeout(zweitesSenden, 2000);
+                        // 1,5 s Puffer: Wagner Zeit lassen, das Sitzungs-Cookie zu
+                        // verankern - kurz genug, dass der leere Korb kaum auffällt
+                        setTimeout(zweitesSenden, 1500);
                     }
                 }, 250);
 

@@ -138,7 +138,8 @@
         .erfass-suggest {
             position: absolute; left: 0; right: 0; top: calc(100% + 8px); z-index: 30;
             background: #fff; border: 1px solid var(--hairline); border-radius: 14px;
-            box-shadow: var(--shadow); overflow: hidden; display: none;
+            box-shadow: var(--shadow); display: none;
+            max-height: 55vh; overflow-y: auto; overflow-x: hidden;
         }
         .erfass-suggest.show { display: block; }
         .sug-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; }
@@ -216,6 +217,13 @@
             .wrap { padding: 0 16px 70px; }
             .card-haupt { padding: 24px; border-radius: 20px; }
             .card-haupt h2 { font-size: 25px; }
+            /* Eingabefeld und "Hinzufügen" untereinander – so bekommt das
+               Vorschlags-Fenster die volle Kartenbreite (gut lesbar) */
+            .erfass-zeile { flex-wrap: wrap; }
+            .erfass-input { flex: 1 0 100%; }
+            .add-btn { flex: 1 0 100%; padding: 12px; }
+            .sug-item { padding: 10px 12px; gap: 10px; }
+            .sug-price { font-size: 13px; }
             /* CSV-Alternative untereinander statt nebeneinander */
             .card-alt { flex-direction: column; align-items: stretch; gap: 12px; }
             .card-alt form { flex-direction: column; align-items: stretch; }
