@@ -383,67 +383,95 @@
                 document.querySelectorAll("a.korb-link").forEach(a => { a.href = oxidKorbUrl(a.dataset.shop); });
             }
 
-            // Wagner (Gambio): eigene "wird vorbereitet"-Seite in einem neuen Tab.
-            // Sie weckt Wagner im Hintergrund (Sitzungs-Cookie, SameSite=None) und
-            // schickt den Warenkorb erst nach einem Zeitpuffer ab -> der Kunde landet
-            // direkt auf dem gefüllten Warenkorb.
-            function warteSeiteWagner(cfg, items, slug) {
-                const prime = cfg.website + "/de/";
-                // Wagner schon von der Vergleichsseite aus anstoßen (Cookie-Vorsprung)
-                try { fetch(prime, { mode: "no-cors", credentials: "include" }).catch(function () {}); } catch (e) {}
+            // Wagner (Gambio): Warenkorb per verstecktem Formular an ein Ziel senden.
+            // "ziel" ist entweder der Name unseres Warenkorb-Tabs oder "_blank".
+            function wagnerKorbSenden(cfg, items, ziel) {
+                const f = document.createElement("form");
+                f.method = "post"; f.action = cfg.warenkorb_endpunkt; f.target = ziel;
+                items.forEach(function (i) {
+                    const a = document.createElement("input"); a.type = "hidden"; a.name = "products_id[]"; a.value = i.pid; f.appendChild(a);
+                    const b = document.createElement("input"); b.type = "hidden"; b.name = "cart_quantity[]"; b.value = i.menge; f.appendChild(b);
+                });
+                document.body.appendChild(f); f.submit(); f.remove();
+            }
 
+            // Wagner (Gambio): Warenkorb zuverlässig füllen - NUR über echte
+            // Seitenaufrufe (die blockiert kein Browser). Das frühere unsichtbare
+            // "Aufwecken" (fetch/Bild) brauchte Drittanbieter-Cookies, die moderne
+            // Browser inzwischen standardmäßig sperren -> darum war es unzuverlässig.
+            //
+            // Ablauf:
+            //  1) Klick -> neuer Tab, Warenkorb wird SOFORT gesendet (POST Nr. 1).
+            //     Wagner stellt dabei sein Sitzungs-Cookie aus. Wiederkehrer sehen
+            //     hier bereits den vollen Korb.
+            //  2) Wir beobachten, wann Wagners Antwort im Tab WIRKLICH angekommen
+            //     ist (der Tab wird dann "fremd" -> Zugriff wirft einen Fehler),
+            //     warten 2 s Puffer und senden denselben Korb NOCH EINMAL
+            //     (POST Nr. 2). Beim allerersten Besuch verwirft Wagner Nr. 1 und
+            //     erst Nr. 2 füllt den Korb. Doppelt senden ist unschädlich:
+            //     Die Aktion SETZT Mengen, sie addiert nicht.
+            //  3) Handy-Sicherheitsnetz: Friert der Browser unsere Seite im
+            //     Hintergrund ein (iPhone), wird Nr. 2 nachgeholt, sobald der
+            //     Nutzer zu unserer Seite zurückwechselt.
+            function wagnerWarenkorbOeffnen(cfg, items, slug) {
+                const name = "korb_" + slug;
                 // Tab SOFORT im Klick öffnen (sonst greift der Popup-Blocker)
-                const win = window.open("", "korb_" + slug);
+                const win = window.open("", name);
                 if (!win) {
-                    // Popup blockiert: einfacher Fallback (öffnet den Warenkorb direkt)
-                    const f = document.createElement("form");
-                    f.method = "post"; f.action = cfg.warenkorb_endpunkt; f.target = "_blank";
-                    items.forEach(function (i) {
-                        const a = document.createElement("input"); a.type = "hidden"; a.name = "products_id[]"; a.value = i.pid; f.appendChild(a);
-                        const b = document.createElement("input"); b.type = "hidden"; b.name = "cart_quantity[]"; b.value = i.menge; f.appendChild(b);
-                    });
-                    document.body.appendChild(f); f.submit(); f.remove();
+                    // Popup blockiert: einfacher Direktversand als Fallback
+                    wagnerKorbSenden(cfg, items, "_blank");
                     return;
                 }
 
-                const felder = items.map(function (i) {
-                    return '<input type="hidden" name="products_id[]" value="' + i.pid + '">'
-                         + '<input type="hidden" name="cart_quantity[]" value="' + i.menge + '">';
-                }).join("");
+                // Kurzer Hinweis im noch leeren Tab (statt weißer Fläche)
+                try {
+                    win.document.open();
+                    win.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8">'
+                        + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+                        + '<title>Warenkorb wird geladen …</title><style>'
+                        + 'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f5f5f7;color:#6b7280;display:flex;min-height:100vh;align-items:center;justify-content:center}'
+                        + '.sp{width:22px;height:22px;border:3px solid #e6e6ea;border-top-color:#12a150;border-radius:50%;margin-right:12px;animation:r 1s linear infinite}'
+                        + '@keyframes r{to{transform:rotate(360deg)}}'
+                        + '</style></head><body><div class="sp"></div>Warenkorb wird geladen …</body></html>');
+                    win.document.close();
+                } catch (e) {}
 
-                const html = '<!doctype html><html lang="de"><head><meta charset="utf-8">'
-                  + '<meta name="viewport" content="width=device-width, initial-scale=1">'
-                  + '<title>Warenkorb wird vorbereitet …</title><style>'
-                  + 'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f5f5f7;color:#0a0a0a;display:flex;min-height:100vh;align-items:center;justify-content:center}'
-                  + '.box{background:#fff;border-radius:18px;box-shadow:0 6px 30px rgba(0,0,0,.08);padding:40px 44px;max-width:440px;text-align:center}'
-                  + '.sp{width:44px;height:44px;border:4px solid #e6e6ea;border-top-color:#12a150;border-radius:50%;margin:0 auto 22px;animation:r 1s linear infinite}'
-                  + '@keyframes r{to{transform:rotate(360deg)}}'
-                  + 'h1{font-size:20px;margin:0 0 8px}p{color:#6b7280;font-size:15px;margin:0 0 20px;line-height:1.5}'
-                  + '.bar{height:6px;background:#ececee;border-radius:99px;overflow:hidden}'
-                  + '.bar>span{display:block;height:100%;width:0;background:#12a150;border-radius:99px}'
-                  + '</style></head><body><div class="box"><div class="sp"></div>'
-                  + '<h1>Dein Warenkorb wird vorbereitet</h1>'
-                  + '<p>Wir legen deine Artikel bei Elektroshop&nbsp;Wagner in den Warenkorb. Einen kurzen Moment …</p>'
-                  + '<div class="bar"><span id="bar"></span></div></div>'
-                  + '<img src="' + prime + '" alt="" style="display:none">'
-                  + '<form id="f" method="post" action="' + cfg.warenkorb_endpunkt + '">' + felder + '</form>'
-                  + '<scr' + 'ipt>'
-                  + 'try{fetch("' + prime + '",{mode:"no-cors",credentials:"include"}).catch(function(){});}catch(e){}'
-                  + 'var WART=4000,t0=Date.now();'
-                  + 'var iv=setInterval(function(){var p=Math.min(1,(Date.now()-t0)/WART);document.getElementById("bar").style.width=(p*100)+"%";if(p>=1)clearInterval(iv);},80);'
-                  + 'setTimeout(function(){document.getElementById("f").submit();},WART);'
-                  + '<\/scr' + 'ipt></body></html>';
+                // POST Nr. 1: sofort senden (legt die Wagner-Sitzung an)
+                wagnerKorbSenden(cfg, items, name);
 
-                win.document.open();
-                win.document.write(html);
-                win.document.close();
+                // POST Nr. 2: erst wenn Wagners Antwort da ist + 2 s Puffer
+                let zweiterGesendet = false;
+                function zweitesSenden() {
+                    if (zweiterGesendet || win.closed) return;
+                    zweiterGesendet = true;
+                    wagnerKorbSenden(cfg, items, name);
+                }
+                const start = Date.now();
+                const pruefer = setInterval(function () {
+                    if (win.closed) { clearInterval(pruefer); return; }
+                    let angekommen = false;
+                    try { void win.document; } catch (e) { angekommen = true; }
+                    if (angekommen || Date.now() - start > 8000) {
+                        clearInterval(pruefer);
+                        setTimeout(zweitesSenden, 2000);
+                    }
+                }, 250);
+
+                // Sicherheitsnetz fürs Handy: nachsenden, wenn unsere Seite
+                // wieder sichtbar wird (falls Timer im Hintergrund eingefroren waren)
+                document.addEventListener("visibilitychange", function nachsenden() {
+                    if (document.visibilityState === "visible") {
+                        document.removeEventListener("visibilitychange", nachsenden);
+                        setTimeout(zweitesSenden, 300);
+                    }
+                });
 
                 // kurzes Knopf-Feedback auf der Vergleichsseite
                 const knoepfe = document.querySelectorAll('.korb-btn[data-shop="' + slug + '"]');
                 knoepfe.forEach(function (k) { k.disabled = true; k.dataset.text = k.textContent; k.textContent = "Warenkorb wird geöffnet …"; });
                 setTimeout(function () {
                     knoepfe.forEach(function (k) { k.disabled = false; k.textContent = k.dataset.text || "Zum Warenkorb"; });
-                }, 4500);
+                }, 5500);
             }
 
             // Shopware (elektroland24): per verstecktem Formular (POST) befüllen
@@ -467,17 +495,11 @@
                     document.body.appendChild(form); form.submit(); form.remove();
                 } else if (cfg.warenkorb_typ === "gambio") {
                     // Gambio (Wagner): "Warenkorb aktualisieren" nimmt mehrere
-                    // Artikel in EINEM Aufruf an. Problem: Beim allerersten Kontakt
-                    // verwirft der Shop die Aktion und legt nur sein Sitzungs-Cookie
-                    // an (Bot-Schutz) -> der erste Versuch käme leer an.
-                    // Lösung: Wir öffnen SOFORT (im Klick, sonst Popup-Blocker) einen
-                    // neuen Tab mit einer eigenen kurzen "wird vorbereitet"-Seite.
-                    // Diese Seite weckt Wagner im Hintergrund (Cookie wird gesetzt,
-                    // SameSite=None -> gilt auch für uns) und schickt den Warenkorb
-                    // erst nach einem Zeitpuffer ab. Der Kunde landet dann direkt
-                    // auf dem GEFÜLLTEN Warenkorb - ohne Startseiten-Umweg, ohne
-                    // leeren Korb. Idempotent (Mengen werden gesetzt, nicht addiert).
-                    warteSeiteWagner(cfg, items, slug);
+                    // Artikel in EINEM Aufruf an. Beim allerersten Kontakt verwirft
+                    // der Shop die Aktion aber und legt nur sein Sitzungs-Cookie an.
+                    // Lösung: sofort senden + automatisch nachsenden, sobald Wagners
+                    // Antwort da ist (Details siehe wagnerWarenkorbOeffnen).
+                    wagnerWarenkorbOeffnen(cfg, items, slug);
                 } else {
                     window.open(cfg.website, "_blank");
                 }
