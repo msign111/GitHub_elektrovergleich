@@ -180,94 +180,66 @@
         tbody tr:nth-child(5) { animation-delay: .32s; }
         tbody tr:nth-child(n+6) { animation-delay: .37s; }
 
-        /* ---- Handy / schmale Bildschirme: KARTEN statt breiter Tabelle ----
-           Auf dem Handy wird die Tabelle zu Karten umgebaut (gleiches HTML,
-           nur anderes CSS - die Preis-Logik im JavaScript bleibt unberührt):
-           - Jeder Artikel = eine Karte: oben Bild, Name und Menge,
-             darunter je Shop EINE Zeile mit Preis und Verfügbarkeit.
-             Der Shop-Name steht direkt in der Zeile (aus data-shop-name).
-           - Die Summen werden zur Abschluss-Karte: je Shop Gesamtpreis
-             und ein großer "Zum Warenkorb"-Knopf in voller Breite.
-           Ergebnis: KEIN Seitwärts-Schieben mehr, nur natürliches Scrollen. */
+        /* ---- Handy / schmale Bildschirme: "eingefrorene" Vergleichstabelle ----
+           Die Tabelle bleibt Tabelle (bester Überblick, günstigster Shop als
+           grüne Spalte sofort erkennbar), bekommt aber einen eigenen
+           Scroll-Kasten mit festgeklebten Rändern:
+           - Shop-Kopfzeile klebt OBEN (beim Runterscrollen immer sichtbar)
+           - Artikel-Spalte klebt LINKS (beim Seitwärtswischen immer sichtbar)
+           - die Ecke oben links liegt ÜBER beidem - Shop-Namen verschwinden
+             darunter und können sich nie in die Artikel-Spalte schieben.
+           Wischen bleibt im Kasten (kein versehentliches Browser-Zurück). */
         @media (max-width: 899px) {
             .hero h1 { font-size: 32px; }
             .wrap { padding: 0 16px 60px; }
 
-            .table-wrap { overflow: visible; }
-            table.vergleich, tbody, tfoot { display: block; min-width: 0; width: 100%; }
-            thead { display: none; }
+            .table-wrap {
+                overflow: auto;
+                max-height: calc(100dvh - 12px);
+                -webkit-overflow-scrolling: touch;   /* weiches Nachrollen (iOS) */
+                overscroll-behavior-x: contain;      /* Wischen löst kein Browser-Zurück aus */
+                border: 1px solid var(--hairline);
+                border-radius: var(--radius);
+                background: var(--bg);
+            }
+            table.vergleich { min-width: 0; }
+            table.vergleich th, table.vergleich td { padding: 14px 12px; }
 
-            /* --- Artikel-Karte --- */
-            tbody tr {
-                display: block; border: 1px solid var(--hairline); border-radius: 16px;
-                background: #fff; box-shadow: var(--shadow-sm);
-                margin-bottom: 14px; overflow: hidden;
+            /* Artikel-Spalte und Ecke links festkleben */
+            td.produkt, th.corner {
+                position: sticky; left: 0; z-index: 2;
+                background: var(--bg);
+                box-shadow: 1px 0 0 var(--hairline);
             }
-            tbody td.produkt {
-                display: block; width: auto; max-width: none; padding: 13px 16px;
-                background: var(--surface-2); border-bottom: 1px solid var(--hairline);
+            /* Ecke oben links: liegt ÜBER Kopfzeile UND Artikel-Spalte, damit
+               die Shop-Namen beim Wischen darunter verschwinden.
+               ("thead th.corner" statt "th.corner", sonst gewinnt die
+               Desktop-Regel mit z-index 2 - genau das war der Fehler,
+               durch den sich Shop-Namen in die Artikel-Spalte schoben.) */
+            thead th.corner {
+                z-index: 4; top: 0; left: 0;
+                box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline);
             }
-            .prod { gap: 12px; }
-            .prod-img { width: 52px; height: 52px; border-radius: 10px; padding: 5px; }
-            .prod-name { font-size: 13px; }
-            .prod-meta { font-size: 10.5px; }
-            .stepper { margin-top: 8px; }
-            .stepper button { width: 26px; height: 26px; font-size: 14px; }
-            .stepper .menge-wert { min-width: 30px; font-size: 12.5px; }
+            thead th.shop-col { z-index: 3; }
 
-            /* --- Shop-Zeilen in der Karte --- */
-            tbody td.cell {
-                display: grid;
-                grid-template-columns: 92px 1fr auto;
-                column-gap: 12px; row-gap: 1px; align-items: center;
-                padding: 11px 16px; text-align: left;
-            }
-            tbody td.cell + td.cell { border-top: 1px solid var(--hairline); }
-            tbody td.cell::before {
-                content: attr(data-shop-name);
-                grid-column: 1; grid-row: 1 / span 2;
-                font-size: 11.5px; font-weight: 600; color: var(--muted); line-height: 1.25;
-            }
-            tbody td.cell.is-best::before { color: var(--accent); }
-            tbody td.cell .price { grid-column: 2; grid-row: 1; font-size: 16px; }
-            tbody td.cell .per { display: none; }
-            tbody td.cell .line { grid-column: 2; grid-row: 2; margin-top: 0; font-size: 11px; }
-            tbody td.cell .avail {
-                grid-column: 3; grid-row: 1; justify-self: end;
-                margin-top: 0; white-space: nowrap; font-size: 10.5px; padding: 4px 9px;
-            }
-            tbody td.cell .avail > span:last-child {
-                max-width: 96px; overflow: hidden; text-overflow: ellipsis;
-            }
-            tbody td.cell > div:not([class]) { grid-column: 3; grid-row: 2; justify-self: end; }
-            tbody td.cell .prodlink { margin-top: 0; font-size: 11px; }
-            tbody td.cell .missing { grid-column: 2; grid-row: 1 / span 2; font-size: 12px; }
+            /* Kompakte Artikel-Spalte */
+            td.produkt { width: 176px; min-width: 176px; max-width: 176px; }
+            .prod { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .prod-img { width: 48px; height: 48px; border-radius: 10px; padding: 5px; }
+            .prod-name { font-size: 12.5px; }
+            .prod-meta { font-size: 10.5px; word-break: break-word; }
+            .stepper { margin-top: 9px; }
+            .stepper button { width: 27px; height: 27px; font-size: 15px; }
+            .stepper .menge-wert { min-width: 32px; font-size: 13px; }
 
-            /* --- Summen-Karte (Gesamt je Shop) --- */
-            tfoot tr {
-                display: block; border: 1px solid var(--hairline); border-radius: 16px;
-                background: #fff; box-shadow: var(--shadow-sm); overflow: hidden; margin-top: 4px;
-            }
-            tfoot td { border-top: none; }
-            tfoot td.produkt {
-                display: block; width: auto; max-width: none; padding: 13px 16px;
-                background: var(--surface-2); border-bottom: 1px solid var(--hairline);
-                font-size: 14px;
-            }
-            tfoot td.shop-col { display: block; text-align: left; padding: 13px 16px; }
-            tfoot td.shop-col + td.shop-col { border-top: 1px solid var(--hairline); }
-            tfoot td.shop-col.is-best { border-radius: 0; }
-            tfoot td.shop-col::before {
-                content: attr(data-shop-name);
-                display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 3px;
-            }
-            tfoot td.shop-col.is-best::before { content: "✓ " attr(data-shop-name); color: var(--accent); }
-            tfoot .sum-line { display: inline; font-size: 12px; }
-            tfoot .versand-hinweis { min-height: 0; font-size: 11px; }
-            tfoot .sum-total { font-size: 19px; margin-top: 4px; }
-            tfoot .saving { margin-top: 6px; }
-            tfoot .unvollstaendig { font-size: 11px; }
-            tfoot .korb-btn { display: block; width: 100%; margin-top: 10px; padding: 12px 16px; font-size: 14px; }
+            /* Kompakte Shop-Spalten */
+            td.cell, tfoot td.shop-col { min-width: 150px; }
+            .shop-name { font-size: 14px; }
+            .best-badge { font-size: 10.5px; padding: 3px 9px; }
+            .price { font-size: 19px; }
+            .avail { white-space: nowrap; font-size: 11px; padding: 5px 9px; margin-top: 10px; }
+            .sum-total { font-size: 20px; }
+            .korb-btn { padding: 10px 14px; font-size: 13px; }
         }
         @media (prefers-reduced-motion: reduce) {
             * { animation: none !important; transition: none !important; }
