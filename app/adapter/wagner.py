@@ -55,11 +55,14 @@ class ElektroshopWagnerAdapter(ShopAdapter):
 
     name = "Elektroshop Wagner"
     website = "https://www.elektroshopwagner.de"
-    # Der Shop (Gambio) kann nur EINEN Artikel pro Aufruf in den Warenkorb
-    # legen (kein Sammel-Warenkorb wie OXID/Shopware). Deshalb Typ "einzeln":
-    # die Vergleichsseite zeigt je Artikel einen "In den Warenkorb"-Knopf.
-    warenkorb_typ = "einzeln"
-    warenkorb_endpunkt = "https://www.elektroshopwagner.de/de/?action=add_product"
+    # Warenkorb vorbefüllen (Gambio): Die "Warenkorb aktualisieren"-Funktion
+    # des Shops nimmt in EINEM Formular-Aufruf mehrere Artikel entgegen
+    # (products_id[] + cart_quantity[]) und legt sie auch NEU an – live
+    # getestet mit leerem Warenkorb. Die Antwortseite ist direkt der gefüllte
+    # Warenkorb. Damit funktioniert der eine "Zum Warenkorb"-Knopf wie bei
+    # OXID (Link) und Shopware (Formular).
+    warenkorb_typ = "gambio"
+    warenkorb_endpunkt = "https://www.elektroshopwagner.de/de/cart?action=update_product"
     # Versandkosten Deutschland (Quelle: elektroshopwagner.de, Seite
     # "Liefer- und Versandbedingungen", Stand 07/2026: Paketdienst 4,95 €,
     # Spedition "nach Volumengewicht ab 39,95 €")
@@ -72,7 +75,8 @@ class ElektroshopWagnerAdapter(ShopAdapter):
     SUCH_SCHLUESSEL = "2e0f5361a1ff26d0b0660d57eb25a103"  # öffentlicher Such-Schlüssel der Webseite
     INDEX = "prod_products_de"
     SUCH_URL = "https://bg4ownwgal-dsn.algolia.net/1/indexes/*/queries"
-    FELDER = "ean,model,name,preis-eur,rrp,availability_text,availability_state,slug,product_id,image_url"
+    FELDER = ("ean,model,name,preis-eur,rrp,availability_text,availability_state,"
+              "slug,product_id,image_url,base_variant_product_id")
 
     def __init__(self, max_parallel: int = 3):
         super().__init__(max_parallel)
@@ -165,7 +169,37 @@ class ElektroshopWagnerAdapter(ShopAdapter):
             begriff = position.ean or position.artikelnummer or position.beschreibung
             return Angebot(shop=self.name, hinweis=f"Kein Treffer für „{begriff}“")
 
-        # "preis-eur" ist der Brutto-Verkaufspreis (teils mit 4 Nachkommastellen)
+        # --- Richtige VARIANTE bestimmen -------------------------------
+        # Bei Varianten-Artikeln (z. B. Hager MBN106/110/.../163) sind ean,
+        # model und product_id GLEICH LANGE Listen: Position 4 in "model"
+        # gehört zu Position 4 in "product_id". Wir suchen also die Stelle,
+        # an der UNSERE Nummer steht, und nehmen die Produkt-ID derselben Stelle.
+        eans = [str(e).strip() for e in _als_liste(treffer.get("ean"))]
+        modelle = [str(m).strip() for m in _als_liste(treffer.get("model"))]
+        ids = [str(i).strip() for i in _als_liste(treffer.get("product_id"))]
+
+        idx = None
+        if position.ean and str(position.ean).strip() in eans:
+            idx = eans.index(str(position.ean).strip())
+        elif position.artikelnummer:
+            gesucht = _nur_alnum(position.artikelnummer)
+            normiert = [_nur_alnum(m) for m in modelle]
+            if gesucht in normiert:
+                idx = normiert.index(gesucht)
+        if idx is None:
+            idx = 0
+        produkt_id = ids[idx] if idx < len(ids) else (ids[0] if ids else "")
+
+        # --- Gilt der Preis für diese Variante? ------------------------
+        # Der Suchdienst liefert nur EINEN Preis je Artikel-Familie – und
+        # zwar den der "Basis-Variante" (base_variant_product_id). Für alle
+        # anderen Varianten kann der echte Preis abweichen (geprüft am
+        # Beispiel Hager: MBN116 = 2,79 €, MBN106 = 7,24 €). Dann zeigen wir
+        # lieber KEINEN Preis als einen falschen.
+        ist_varianten_artikel = len(ids) > 1
+        basis_id = str(treffer.get("base_variant_product_id") or "").strip()
+        preis_gilt = (not ist_varianten_artikel) or (produkt_id == basis_id and basis_id != "")
+
         preis = _zu_float(treffer.get("preis-eur"))
         if preis is not None:
             preis = round(preis, 2)
@@ -176,16 +210,32 @@ class ElektroshopWagnerAdapter(ShopAdapter):
             or ("lager" in verfuegbarkeit.lower() and "nicht" not in verfuegbarkeit.lower())
         )
 
-        # Produktlink aus Kurzname (slug) und Produkt-ID zusammensetzen,
-        # z. B. .../de/p/merten-meg2301-0319-..._169784
-        # Bei Sammel-Artikeln sind slug/product_id Listen -> ersten Eintrag nehmen.
+        # Produktlink: Kurzname (slug) + Produkt-ID der richtigen Variante,
+        # z. B. .../de/p/hager-mbn1xx-..._187084 (führt direkt zur Variante)
         produktlink = ""
         slugs = _als_liste(treffer.get("slug"))
-        ids = _als_liste(treffer.get("product_id"))
         slug = str(slugs[0] if slugs else "").strip()
-        produkt_id = str(ids[0] if ids else "").strip()
         if slug and produkt_id:
             produktlink = f"{self.website}/de/p/{slug}_{produkt_id}"
+
+        titel = str(treffer.get("name") or "").strip()
+        if ist_varianten_artikel and idx < len(modelle):
+            titel = f"{titel} – Variante {modelle[idx]}"
+
+        if not preis_gilt:
+            # Variante gefunden, aber Preis unbekannt: ohne Preis melden,
+            # damit die Vergleichsseite den Shop-Link trotzdem anbieten kann.
+            return Angebot(
+                shop=self.name,
+                gefunden=False,
+                verfuegbarkeit=verfuegbarkeit,
+                lieferbar=lieferbar,
+                titel=titel,
+                produktlink=produktlink,
+                bild=str(treffer.get("image_url") or "").strip(),
+                shop_produkt_id=produkt_id,
+                hinweis="Variante im Shop vorhanden, Preis dort einsehbar",
+            )
 
         preis_text = ""
         if preis is not None:
@@ -198,7 +248,7 @@ class ElektroshopWagnerAdapter(ShopAdapter):
             preis_text=preis_text,
             verfuegbarkeit=verfuegbarkeit,
             lieferbar=lieferbar,
-            titel=str(treffer.get("name") or "").strip(),
+            titel=titel,
             produktlink=produktlink,
             bild=str(treffer.get("image_url") or "").strip(),
             shop_produkt_id=produkt_id,
