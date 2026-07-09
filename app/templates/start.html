@@ -472,15 +472,12 @@
             vergleichBtn.addEventListener("click", () => {
                 if (positionen.length === 0) return;
                 const eingabe = positionen.map(p => p.k + "; " + p.m).join("\n");
-                // Sofort zeigen, dass es losgeht (Knopf sperren + Lade-Anzeige)
+                // Sofort zeigen, dass es losgeht (Knopf sperren + Lade-Anzeige);
+                // der Vergleich wird im Hintergrund geladen, damit die
+                // Animationen weiterlaufen (v. a. iPhone).
                 vergleichBtn.disabled = true;
                 vergleichBtn.textContent = "Vergleich läuft …";
-                ladeAnzeigeStarten();
-                const form = document.createElement("form");
-                form.method = "post"; form.action = "/warenkorb-manuell";
-                const inp = document.createElement("input");
-                inp.type = "hidden"; inp.name = "eingabe"; inp.value = eingabe;
-                form.appendChild(inp); document.body.appendChild(form); form.submit();
+                vergleichAbschicken("/warenkorb-manuell", new URLSearchParams({ eingabe: eingabe }));
             });
 
             // Kommt der Nutzer per "Zurück" hierher, Knopf wieder freigeben
@@ -492,10 +489,14 @@
             });
         })();
 
-        // CSV-Upload: auch hier beim Absenden die Lade-Anzeige zeigen
+        // CSV-Upload: ebenfalls im Hintergrund laden (gleiche Lade-Anzeige)
         (function () {
             const csvForm = document.querySelector('form[action="/warenkorb"]');
-            if (csvForm) csvForm.addEventListener("submit", function () { ladeAnzeigeStarten(); });
+            if (!csvForm) return;
+            csvForm.addEventListener("submit", function (e) {
+                e.preventDefault();
+                vergleichAbschicken("/warenkorb", new FormData(csvForm), csvForm);
+            });
         })();
     </script>
 </body>

@@ -218,6 +218,17 @@ async def api_suche(q: str = ""):
     return JSONResponse(KATALOG_QUELLE.produktliste(begriff, anzahl=24))
 
 
+@app.get("/vergleich")
+async def vergleich_neuladen():
+    """
+    Der Vergleich wird im Browser im Hintergrund geladen und eingesetzt
+    (die Adresse zeigt dann /vergleich). Lädt jemand diese Adresse direkt
+    oder aktualisiert die Seite, gibt es keine Momentaufnahme mehr –
+    dann geht es zurück zur Startseite für einen neuen Vergleich.
+    """
+    return RedirectResponse("/", status_code=303)
+
+
 # Hinweis: Diese beiden Funktionen sind bewusst NICHT "async". FastAPI führt
 # normale Funktionen in einem Neben-Thread aus – so bleibt der Server für
 # andere Besucher ansprechbar, während er auf die Shop-Antworten wartet.

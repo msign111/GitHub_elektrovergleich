@@ -71,13 +71,47 @@
 </div>
 
 <script>
-    // Zeigt die Lade-Anzeige. Balken und Pulsieren laufen komplett über
-    // CSS (siehe oben) - JavaScript muss nur die Klasse setzen. So bleibt
-    // alles in Bewegung, auch wenn der Browser beim Seitenwechsel
-    // JavaScript pausiert (iPhone).
+    // Zeigt die Lade-Anzeige (Spinner, pulsierende Shop-Namen, Balken).
     function ladeAnzeigeStarten() {
         const schleier = document.getElementById("lade-schleier");
         if (schleier) schleier.classList.add("aktiv");
+    }
+
+    // Startet den Vergleich, OHNE die Seite zu wechseln: Das Ergebnis wird
+    // im Hintergrund geholt (fetch) und erst dann als neue Seite eingesetzt.
+    // Grund: Beim klassischen Seitenwechsel friert das iPhone die komplette
+    // Darstellung ein - Spinner und Balken standen still. So bleibt die
+    // Seite lebendig und alle Animationen laufen bis zur letzten Sekunde.
+    //  url          - Ziel (z. B. /warenkorb-manuell)
+    //  daten        - URLSearchParams oder FormData (CSV)
+    //  ersatzFormular - optional: echtes Formular als Notnagel bei Netzfehler
+    async function vergleichAbschicken(url, daten, ersatzFormular) {
+        ladeAnzeigeStarten();
+        try {
+            const antwort = await fetch(url, { method: "POST", body: daten, credentials: "same-origin" });
+            if (!antwort.ok) throw new Error("Serverantwort " + antwort.status);
+            const html = await antwort.text();
+            // Adresszeile auf /vergleich stellen: "Zurück" führt wieder zur
+            // Eingabe, ein Neuladen von /vergleich leitet der Server zur
+            // Startseite um (der Vergleich ist eine Momentaufnahme).
+            history.pushState(null, "", "/vergleich");
+            document.open();
+            document.write(html);
+            document.close();
+        } catch (fehler) {
+            // Notnagel: klassisch mit Seitenwechsel absenden
+            if (ersatzFormular) { ersatzFormular.submit(); return; }
+            const f = document.createElement("form");
+            f.method = "post"; f.action = url;
+            if (daten && typeof daten.forEach === "function") {
+                daten.forEach(function (wert, name) {
+                    const i = document.createElement("input");
+                    i.type = "hidden"; i.name = name; i.value = wert;
+                    f.appendChild(i);
+                });
+            }
+            document.body.appendChild(f); f.submit();
+        }
     }
 
     // Kommt der Nutzer per "Zurück" auf diese Seite (Browser-Cache),

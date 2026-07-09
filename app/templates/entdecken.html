@@ -160,12 +160,8 @@
             const a = ladeAuswahl();
             if(a.length === 0) return;
             const eingabe = a.map(x => x.k + '; ' + x.m).join('\n');
-            ladeAnzeigeStarten();   // sofort zeigen, dass der Vergleich läuft
-            const form = document.createElement('form');
-            form.method = 'post'; form.action = '/warenkorb-manuell';
-            const inp = document.createElement('input');
-            inp.type = 'hidden'; inp.name = 'eingabe'; inp.value = eingabe;
-            form.appendChild(inp); document.body.appendChild(form); form.submit();
+            // Vergleich im Hintergrund laden - Lade-Anzeige bleibt lebendig
+            vergleichAbschicken('/warenkorb-manuell', new URLSearchParams({ eingabe: eingabe }));
         }
 
         let toastTimer;

@@ -86,6 +86,7 @@
         thead th.shop-col { position: sticky; top: 0; background: var(--bg); z-index: 3; padding-top: 14px; padding-bottom: 18px; box-shadow: 0 1px 0 var(--hairline); }
         thead th.shop-col.is-best { background: var(--accent-weak); border-radius: var(--radius) var(--radius) 0 0; }
         td.shop-col.is-best { background: var(--accent-weak); }
+        td.shop-col.is-best .price { color: var(--accent); }   /* günstigster Shop: Preis in Grün */
         tfoot td.shop-col.is-best { border-radius: 0 0 var(--radius) var(--radius); }
         .shop-head { display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .best-badge {
@@ -201,15 +202,23 @@
                 border: 1px solid var(--hairline);
                 border-radius: var(--radius);
                 background: var(--bg);
+                box-shadow: var(--shadow);           /* schwebender Kasten statt harter Rahmen */
+                /* Spalten rasten beim Wischen sanft ein (wie bei modernen Apps);
+                   der Versatz entspricht der festgeklebten Artikel-Spalte */
+                scroll-snap-type: x proximity;
+                scroll-padding-left: 176px;
             }
             table.vergleich { min-width: 0; }
             table.vergleich th, table.vergleich td { padding: 14px 12px; }
+            /* feine Trennlinien zwischen den Artikel-Zeilen */
+            tbody tr + tr td { border-top: 1px solid var(--hairline); }
 
-            /* Artikel-Spalte und Ecke links festkleben */
+            /* Artikel-Spalte und Ecke links festkleben; weicher Schatten
+               statt harter Linie an der Klebekante */
             td.produkt, th.corner {
                 position: sticky; left: 0; z-index: 2;
                 background: var(--bg);
-                box-shadow: 1px 0 0 var(--hairline);
+                box-shadow: 10px 0 14px -10px rgba(0, 0, 0, .16);
             }
             /* Ecke oben links: liegt ÜBER Kopfzeile UND Artikel-Spalte, damit
                die Shop-Namen beim Wischen darunter verschwinden.
@@ -218,15 +227,28 @@
                durch den sich Shop-Namen in die Artikel-Spalte schoben.) */
             thead th.corner {
                 z-index: 4; top: 0; left: 0;
-                box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline);
+                box-shadow: 10px 0 14px -10px rgba(0, 0, 0, .16), 0 1px 0 var(--hairline);
             }
-            thead th.shop-col { z-index: 3; }
+            thead th.corner::after {                 /* kleine Beschriftung der Ecke */
+                content: "Artikel"; font-size: 11px; font-weight: 600; color: var(--muted);
+            }
+            thead th.shop-col { z-index: 3; padding-top: 12px; padding-bottom: 12px; scroll-snap-align: start; }
 
-            /* Kompakte Artikel-Spalte */
+            /* Shop-Namen als Pillen (wie Tab-Knöpfe); der günstigste in Grün */
+            .shop-col.is-best .best-badge { display: none; }
+            .shop-name {
+                display: inline-block; font-size: 12.5px; font-weight: 600;
+                background: var(--surface); border-radius: 999px; padding: 7px 13px;
+                white-space: nowrap;
+            }
+            thead th.shop-col.is-best .shop-name { background: var(--accent); color: #fff; }
+            thead th.shop-col.is-best .shop-name::before { content: "✓ "; }
+
+            /* Kompakte Artikel-Spalte; lange deutsche Wörter werden getrennt */
             td.produkt { width: 176px; min-width: 176px; max-width: 176px; }
             .prod { flex-direction: column; align-items: flex-start; gap: 8px; }
             .prod-img { width: 48px; height: 48px; border-radius: 10px; padding: 5px; }
-            .prod-name { font-size: 12.5px; }
+            .prod-name { font-size: 12.5px; overflow-wrap: anywhere; hyphens: auto; }
             .prod-meta { font-size: 10.5px; word-break: break-word; }
             .stepper { margin-top: 9px; }
             .stepper button { width: 27px; height: 27px; font-size: 15px; }
@@ -234,8 +256,6 @@
 
             /* Kompakte Shop-Spalten */
             td.cell, tfoot td.shop-col { min-width: 150px; }
-            .shop-name { font-size: 14px; }
-            .best-badge { font-size: 10.5px; padding: 3px 9px; }
             .price { font-size: 19px; }
             .avail { white-space: nowrap; font-size: 11px; padding: 5px 9px; margin-top: 10px; }
             .sum-total { font-size: 20px; }
