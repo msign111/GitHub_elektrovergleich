@@ -422,13 +422,16 @@
                         document.body.appendChild(form); form.submit(); form.remove();
                     };
                     senden();
-                    // Knopf kurz sperren und nach 3 Sekunden erneut senden
+                    // Knopf kurz sperren und ZWEIMAL erneut senden (2,5 s und
+                    // 5,5 s) - doppelte Sicherheit, falls die erste Antwort des
+                    // Shops langsam kommt. Mengen werden gesetzt, nicht addiert.
                     const knoepfe = document.querySelectorAll('.korb-btn[data-shop="' + slug + '"]');
                     knoepfe.forEach(k => { k.disabled = true; k.dataset.text = k.textContent; k.textContent = "Korb wird gefüllt …"; });
+                    setTimeout(senden, 2500);
                     setTimeout(() => {
                         senden();
                         knoepfe.forEach(k => { k.disabled = false; k.textContent = k.dataset.text || "Zum Warenkorb"; });
-                    }, 3000);
+                    }, 5500);
                 } else {
                     window.open(cfg.website, "_blank");
                 }

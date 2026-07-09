@@ -135,6 +135,15 @@ class ElektroshopWagnerAdapter(ShopAdapter):
             modelle = [_nur_alnum(m) for m in _als_liste(treffer.get("model"))]
             if gesucht and gesucht in modelle:
                 return True
+            # Wagner führt oft die LANGE Herstellernummer als Artikelnummer
+            # (z. B. 2CKA001724A4334), schreibt die kurze Handelsnummer
+            # (z. B. 2531-914) aber in den Produktnamen. Deshalb zusätzlich
+            # im Namen suchen – nur bei ausreichend langen Nummern (>= 6
+            # Zeichen), damit kurze Zahlen nichts Falsches treffen.
+            if len(gesucht) >= 6:
+                name = _nur_alnum(treffer.get("name"))
+                if gesucht in name:
+                    return True
         return False
 
     def _finde_treffer(self, position: Position) -> dict | None:
