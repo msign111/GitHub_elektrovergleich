@@ -49,8 +49,10 @@
         .site-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 0 10px; }
         /* Editorial-Typografie: charaktervolle Serife für Marke und Überschriften */
         .logo, h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; }
-        .logo { display: inline-flex; align-items: baseline; gap: 6px; font-weight: 600; font-size: 21px; letter-spacing: -.01em; }
-        .logo .lite { color: var(--muted); font-weight: 500; font-style: italic; }
+        .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 20px; letter-spacing: -.01em; }
+        .logo .lite { color: var(--muted); font-weight: 500; }
+        .logo .marke { width: 26px; height: 26px; color: var(--text); transition: transform .55s cubic-bezier(.34, 1.56, .64, 1); }
+        .logo:hover .marke { transform: rotate(180deg); }
         .back-top { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
         .back-top:hover { color: var(--text); }
 
@@ -290,8 +292,17 @@
 <body>
     <div class="wrap">
         <header class="site-head">
-            <!-- Wortmarke: reine Typografie, kein Symbol (Editorial-Stil) -->
-            <span class="logo">Macher <span class="lite">Elektro</span></span>
+            <span class="logo">
+                <!-- Markenzeichen: SCHUKO-Steckdose als Monogramm -->
+                <svg class="marke" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                    <circle cx="16" cy="16" r="13.2" stroke="currentColor" stroke-width="2.4"/>
+                    <circle cx="10.9" cy="16" r="2.4" fill="currentColor"/>
+                    <circle cx="21.1" cy="16" r="2.4" fill="currentColor"/>
+                    <rect x="14.9" y="5.9" width="2.2" height="4" rx="1.1" fill="currentColor"/>
+                    <rect x="14.9" y="22.1" width="2.2" height="4" rx="1.1" fill="currentColor"/>
+                </svg>
+                Macher <span class="lite">Elektro</span>
+            </span>
             <a class="back-top" href="/">Neuer Vergleich</a>
         </header>
 
