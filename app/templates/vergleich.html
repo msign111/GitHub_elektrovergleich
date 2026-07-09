@@ -6,7 +6,7 @@
     <title>Preisvergleich – Macher Elektro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #ffffff;
@@ -47,17 +47,16 @@
 
         /* Kopf */
         .site-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 0 10px; }
-        /* Eigene Marken-Schrift: Sora für Logo und Überschriften */
-        .logo, h1, h2, h3 { font-family: 'Sora', 'Inter', -apple-system, sans-serif; }
-        .logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
-        .logo .bolt { width: 24px; height: 24px; }
-        .logo .lite { color: var(--muted); font-weight: 600; }
+        /* Editorial-Typografie: charaktervolle Serife für Marke und Überschriften */
+        .logo, h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; }
+        .logo { display: inline-flex; align-items: baseline; gap: 6px; font-weight: 600; font-size: 21px; letter-spacing: -.01em; }
+        .logo .lite { color: var(--muted); font-weight: 500; font-style: italic; }
         .back-top { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
         .back-top:hover { color: var(--text); }
 
         /* Hero */
         .hero { padding: 26px 0 6px; }
-        .hero h1 { font-size: 48px; line-height: 1.02; letter-spacing: -.035em; font-weight: 700; margin: 0 0 10px; }
+        .hero h1 { font-size: 48px; line-height: 1.04; letter-spacing: -.015em; font-weight: 500; margin: 0 0 10px; }
         .hero .sub { color: var(--muted); font-size: 17.5px; max-width: 560px; margin: 0; }
 
         /* Steuerleiste */
@@ -287,16 +286,12 @@
             * { animation: none !important; transition: none !important; }
         }
     </style>
-    {% include "_design.html" %}
 </head>
 <body>
     <div class="wrap">
         <header class="site-head">
-            <span class="logo">
-                <!-- Markenzeichen: das "M" von Macher als Spannungsimpuls -->
-                <svg class="bolt" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="mimpuls" x1="3" y1="19" x2="21" y2="5" gradientUnits="userSpaceOnUse"><stop stop-color="#0e8a44"/><stop offset="1" stop-color="#84cc16"/></linearGradient></defs><path d="M3 18.5 L7 6.5 L12 14.5 L17 6.5 L21 18.5" stroke="url(#mimpuls)" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Macher<span class="lite">Elektro</span>
-            </span>
+            <!-- Wortmarke: reine Typografie, kein Symbol (Editorial-Stil) -->
+            <span class="logo">Macher <span class="lite">Elektro</span></span>
             <a class="back-top" href="/">Neuer Vergleich</a>
         </header>
 
