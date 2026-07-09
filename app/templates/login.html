@@ -6,7 +6,7 @@
     <title>Anmelden – Macher Elektro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --text:#0a0a0a; --muted:#6b7280; --hairline:#ececee; --accent:#12a150; --accent-weak:#f0faf4;
                 --primary:#0a0a0a; --surface-2:#fbfbfd; }
@@ -23,8 +23,10 @@
         .box { position: relative; z-index: 1; width: 100%; max-width: 400px; background: #fff;
             border: 1px solid #e7ece8; border-radius: 24px; padding: 34px;
             box-shadow: 0 24px 70px rgba(16,90,60,.12), 0 2px 10px rgba(0,0,0,.04); }
-        .logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; letter-spacing: -.02em; margin-bottom: 22px; }
-        .logo .bolt { width: 20px; height: 20px; color: var(--accent); }
+        /* Eigene Marken-Schrift: Sora für Logo und Überschriften */
+        .logo, h1 { font-family: 'Sora', 'Inter', -apple-system, sans-serif; }
+        .logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; letter-spacing: -.02em; margin-bottom: 22px; }
+        .logo .bolt { width: 22px; height: 22px; }
         .logo .lite { color: var(--muted); font-weight: 600; }
         h1 { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 6px; }
         p.sub { color: var(--muted); font-size: 14.5px; margin: 0 0 22px; }
@@ -44,7 +46,7 @@
 <body>
     <div class="box">
         <span class="logo">
-            <svg class="bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg>
+            <svg class="bolt" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="mimpuls" x1="3" y1="19" x2="21" y2="5" gradientUnits="userSpaceOnUse"><stop stop-color="#0e8a44"/><stop offset="1" stop-color="#84cc16"/></linearGradient></defs><path d="M3 18.5 L7 6.5 L12 14.5 L17 6.5 L21 18.5" stroke="url(#mimpuls)" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Macher<span class="lite">Elektro</span>
         </span>
         <h1>Anmelden</h1>

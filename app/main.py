@@ -237,6 +237,30 @@ async def api_suche(q: str = ""):
     return JSONResponse(KATALOG_QUELLE.produktliste(begriff, anzahl=24))
 
 
+def _ean_ergaenzen(positionen) -> None:
+    """
+    Macht die Suche EINDEUTIG: Fehlt einer Position die EAN, wird sie über
+    die Katalog-Suche anhand der Artikelnummer nachgeschlagen. Alle Shops
+    suchen dann mit der EAN (weltweit eindeutig) statt mit der mehrdeutigen
+    Artikelnummer - das verhindert falsche Treffer, z. B. die falsche
+    Variante bei Elektroshop Wagner (dort teilen sich ganze Varianten-
+    Familien eine Nummer). Die Artikelnummer bleibt als Notnagel erhalten.
+    """
+    for p in positionen:
+        if p.ean or not p.artikelnummer:
+            continue
+        try:
+            treffer = KATALOG_QUELLE.produktliste(p.artikelnummer, anzahl=5)
+        except Exception:
+            continue  # Katalog nicht erreichbar -> einfach ohne EAN weitersuchen
+        gesucht = re.sub(r"[^a-z0-9]", "", p.artikelnummer.lower())
+        for t in treffer:
+            t_nr = re.sub(r"[^a-z0-9]", "", str(t.get("artikelnummer") or "").lower())
+            if t_nr == gesucht and t.get("ean"):
+                p.ean = str(t["ean"])
+                break
+
+
 @app.get("/vergleich")
 async def vergleich_neuladen():
     """
@@ -257,6 +281,7 @@ def warenkorb_hochladen(request: Request, datei: UploadFile = File(...)):
     """Nimmt die hochgeladene CSV-Datei entgegen und zeigt den Preisvergleich."""
     inhalt = datei.file.read()
     positionen = csv_einlesen(inhalt)
+    _ean_ergaenzen(positionen)
     return _vergleich_anzeigen(request, positionen, quelle=f"CSV-Datei: {datei.filename}")
 
 
@@ -264,4 +289,5 @@ def warenkorb_hochladen(request: Request, datei: UploadFile = File(...)):
 def warenkorb_manuell(request: Request, eingabe: str = Form("")):
     """Nimmt direkt eingetippte Artikel/EANs entgegen und zeigt den Preisvergleich."""
     positionen = positionen_aus_text(eingabe)
+    _ean_ergaenzen(positionen)
     return _vergleich_anzeigen(request, positionen, quelle="Direkteingabe")

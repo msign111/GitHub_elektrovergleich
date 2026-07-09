@@ -6,7 +6,7 @@
     <title>Sortiment entdecken – Macher Elektro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg:#fff; --surface:#f5f5f7; --surface-2:#fbfbfd; --text:#0a0a0a; --muted:#6b7280;
@@ -20,8 +20,10 @@
         a { color:inherit; }
 
         .site-head { display:flex; align-items:center; justify-content:space-between; padding:30px 0 10px; }
-        .logo { display:inline-flex; align-items:center; gap:9px; font-weight:700; font-size:19px; letter-spacing:-.02em; text-decoration:none; }
-        .logo .bolt { width:22px; height:22px; color:var(--accent); }
+        /* Eigene Marken-Schrift: Sora für Logo und Überschriften */
+        .logo, h1, h2, h3 { font-family:'Sora','Inter',-apple-system,sans-serif; }
+        .logo { display:inline-flex; align-items:center; gap:9px; font-weight:800; font-size:19px; letter-spacing:-.02em; text-decoration:none; }
+        .logo .bolt { width:24px; height:24px; }
         .logo .lite { color:var(--muted); font-weight:600; }
         .nav-link { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; }
         .nav-link:hover { color:var(--text); }
@@ -93,7 +95,7 @@
     <div class="wrap">
         <header class="site-head">
             <a class="logo" href="/">
-                <svg class="bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg>
+                <svg class="bolt" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="mimpuls" x1="3" y1="19" x2="21" y2="5" gradientUnits="userSpaceOnUse"><stop stop-color="#0e8a44"/><stop offset="1" stop-color="#84cc16"/></linearGradient></defs><path d="M3 18.5 L7 6.5 L12 14.5 L17 6.5 L21 18.5" stroke="url(#mimpuls)" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Macher<span class="lite">Elektro</span>
             </a>
             <a class="nav-link" href="/">Warenkorb hochladen</a>
@@ -174,7 +176,8 @@
 
         // ----- Produktkacheln -----
         function karte(p){
-            const kennung = p.artikelnummer || p.ean || '';
+            // EAN bevorzugen: damit suchen alle Shops im Vergleich eindeutig
+            const kennung = p.ean || p.artikelnummer || '';
             const preis = (p.preis != null) ? euro(p.preis) : '';
             const meta = p.artikelnummer ? ('Art.-Nr. ' + esc(p.artikelnummer)) : (p.ean ? ('EAN ' + esc(p.ean)) : '');
             return '<div class="pcard">'

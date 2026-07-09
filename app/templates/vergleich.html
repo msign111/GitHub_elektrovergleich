@@ -6,7 +6,7 @@
     <title>Preisvergleich – Macher Elektro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #ffffff;
@@ -47,8 +47,10 @@
 
         /* Kopf */
         .site-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 0 10px; }
-        .logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 19px; letter-spacing: -.02em; }
-        .logo .bolt { width: 22px; height: 22px; color: var(--accent); }
+        /* Eigene Marken-Schrift: Sora für Logo und Überschriften */
+        .logo, h1, h2, h3 { font-family: 'Sora', 'Inter', -apple-system, sans-serif; }
+        .logo { display: inline-flex; align-items: center; gap: 9px; font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
+        .logo .bolt { width: 24px; height: 24px; }
         .logo .lite { color: var(--muted); font-weight: 600; }
         .back-top { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
         .back-top:hover { color: var(--text); }
@@ -203,9 +205,11 @@
                 border-radius: var(--radius);
                 background: var(--bg);
                 box-shadow: var(--shadow);           /* schwebender Kasten statt harter Rahmen */
-                /* Spalten rasten beim Wischen sanft ein (wie bei modernen Apps);
-                   der Versatz entspricht der festgeklebten Artikel-Spalte */
-                scroll-snap-type: x proximity;
+                /* Beim Wischen rastet immer GENAU EIN Shop ein (mandatory);
+                   der Versatz entspricht der festgeklebten Artikel-Spalte.
+                   Vom nächsten Shop bleibt ein Streifen sichtbar (Spalten-
+                   breite unten), damit klar ist: hier kann man wischen. */
+                scroll-snap-type: x mandatory;
                 scroll-padding-left: 150px;
             }
             table.vergleich { min-width: 0; }
@@ -268,8 +272,13 @@
             .stepper button { width: 27px; height: 27px; font-size: 15px; }
             .stepper .menge-wert { min-width: 32px; font-size: 13px; }
 
-            /* Kompakte Shop-Spalten */
-            td.cell, tfoot td.shop-col { min-width: 150px; }
+            /* Shop-Spalten: genau EIN Shop passt neben die Artikel-Spalte,
+               vom nächsten bleibt ein ~34px breiter Streifen sichtbar
+               (Wisch-Hinweis). 100vw - 32 Seitenränder - 150 Artikel - 34 Peek */
+            thead th.shop-col, td.cell, tfoot td.shop-col {
+                min-width: calc(100vw - 216px);
+                max-width: calc(100vw - 216px);
+            }
             .price { font-size: 19px; }
             .avail { white-space: nowrap; font-size: 11px; padding: 5px 9px; margin-top: 10px; }
             .sum-total { font-size: 20px; }
@@ -284,9 +293,8 @@
     <div class="wrap">
         <header class="site-head">
             <span class="logo">
-                <svg class="bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/>
-                </svg>
+                <!-- Markenzeichen: das "M" von Macher als Spannungsimpuls -->
+                <svg class="bolt" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="mimpuls" x1="3" y1="19" x2="21" y2="5" gradientUnits="userSpaceOnUse"><stop stop-color="#0e8a44"/><stop offset="1" stop-color="#84cc16"/></linearGradient></defs><path d="M3 18.5 L7 6.5 L12 14.5 L17 6.5 L21 18.5" stroke="url(#mimpuls)" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Macher<span class="lite">Elektro</span>
             </span>
             <a class="back-top" href="/">Neuer Vergleich</a>
