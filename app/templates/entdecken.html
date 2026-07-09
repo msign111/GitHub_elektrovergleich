@@ -160,6 +160,7 @@
             const a = ladeAuswahl();
             if(a.length === 0) return;
             const eingabe = a.map(x => x.k + '; ' + x.m).join('\n');
+            ladeAnzeigeStarten();   // sofort zeigen, dass der Vergleich läuft
             const form = document.createElement('form');
             form.method = 'post'; form.action = '/warenkorb-manuell';
             const inp = document.createElement('input');
@@ -269,5 +270,6 @@
         const erste = document.querySelector('.cat');
         if(erste){ setActive(erste); ladeProdukte(erste.dataset.suche, erste.textContent.trim()); }
     </script>
+    {% include "_ladeanzeige.html" %}
 </body>
 </html>

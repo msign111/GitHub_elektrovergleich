@@ -37,9 +37,10 @@ class ShopAdapter:
     # Gratis-Versand ab diesem Bestellwert (0 = kein Gratis-Versand). Gilt nur für Paketversand.
     versandfrei_ab = 0.0
 
-    def __init__(self, max_parallel: int = 3):
+    def __init__(self, max_parallel: int = 8):
         # Wie viele Artikel gleichzeitig bei diesem Shop abgefragt werden.
-        # Bewusst klein, damit wir den Shop-Server nicht belasten.
+        # 8 ist ein guter Mittelweg: deutlich schneller für den Kunden,
+        # aber immer noch moderat für den Shop-Server (kurze, einfache Abrufe).
         self.max_parallel = max_parallel
         # Zwischenspeicher: Suchschlüssel -> (Angebot, Zeitpunkt)
         self._cache: dict = {}

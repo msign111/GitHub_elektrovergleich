@@ -78,7 +78,7 @@ class ElektroshopWagnerAdapter(ShopAdapter):
     FELDER = ("ean,model,name,preis-eur,rrp,availability_text,availability_state,"
               "slug,product_id,image_url,base_variant_product_id")
 
-    def __init__(self, max_parallel: int = 3):
+    def __init__(self, max_parallel: int = 8):
         super().__init__(max_parallel)
         # Jeder Arbeits-Thread bekommt seine eigene Verbindung (thread-sicher).
         self._lokal = threading.local()

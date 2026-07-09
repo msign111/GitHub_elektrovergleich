@@ -43,7 +43,7 @@ class ElektroLand24Adapter(ShopAdapter):
     versand_spedition = 99.00
     versandfrei_ab = 0.0  # keine offiziell belegte Gratis-Versand-Grenze
 
-    def __init__(self, max_parallel: int = 3):
+    def __init__(self, max_parallel: int = 8):
         super().__init__(max_parallel)
         # Jeder Arbeits-Thread bekommt seine eigene Verbindung (thread-sicher).
         self._lokal = threading.local()

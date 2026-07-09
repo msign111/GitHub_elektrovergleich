@@ -59,7 +59,7 @@ class ElektroWandeltAdapter(ShopAdapter):
     SUCH_URL = f"https://eu1-search.doofinder.com/6/{HASHID}/_search"
     SHOP = "https://www.elektro-wandelt.de"
 
-    def __init__(self, max_parallel: int = 3):
+    def __init__(self, max_parallel: int = 8):
         super().__init__(max_parallel)
         # Jeder Arbeits-Thread bekommt seine eigene Verbindung (thread-sicher).
         self._lokal = threading.local()

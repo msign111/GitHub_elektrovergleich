@@ -1,0 +1,84 @@
+{# _ladeanzeige.html – Wiederverwendbare Lade-Anzeige für den Live-Vergleich.
+   Einbinden mit: {% include "_ladeanzeige.html" %} (vor dem schließenden </body>).
+   Aufruf im JavaScript: ladeAnzeigeStarten()  – z. B. direkt vor form.submit().
+   Blendet sich bei Zurück-Navigation (Browser-Cache) automatisch wieder aus. #}
+<style>
+    /* Lade-Anzeige: liegt über der ganzen Seite, solange der Vergleich läuft */
+    .lade-schleier {
+        position: fixed; inset: 0; z-index: 60; display: none;
+        align-items: center; justify-content: center; padding: 24px;
+        background: rgba(255, 255, 255, .9);
+        -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    }
+    .lade-schleier.aktiv { display: flex; }
+    .lade-box {
+        background: #fff; border: 1px solid #ececee; border-radius: 18px;
+        box-shadow: 0 6px 30px rgba(0, 0, 0, .08); padding: 34px 38px;
+        max-width: 440px; width: 100%; text-align: center;
+    }
+    .lade-spinner {
+        width: 46px; height: 46px; border: 4px solid #ececee; border-top-color: #12a150;
+        border-radius: 50%; margin: 0 auto 20px; animation: lade-drehen 1s linear infinite;
+    }
+    @keyframes lade-drehen { to { transform: rotate(360deg); } }
+    .lade-box h2 { font-size: 20px; margin: 0 0 8px; letter-spacing: -.01em; color: #0a0a0a; }
+    .lade-box p { color: #6b7280; font-size: 15px; margin: 0 0 20px; line-height: 1.5; }
+    .lade-shops { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+    .lade-shops span {
+        font-size: 13px; font-weight: 600; color: #6b7280;
+        border: 1px solid #ececee; border-radius: 99px; padding: 5px 12px;
+        animation: lade-pulsieren 1.6s ease-in-out infinite;
+    }
+    .lade-shops span:nth-child(2) { animation-delay: .2s; }
+    .lade-shops span:nth-child(3) { animation-delay: .4s; }
+    .lade-shops span:nth-child(4) { animation-delay: .6s; }
+    @keyframes lade-pulsieren {
+        0%, 100% { opacity: .45; }
+        50% { opacity: 1; color: #12a150; border-color: #12a150; }
+    }
+    .lade-balken { height: 6px; background: #f5f5f7; border-radius: 99px; overflow: hidden; }
+    .lade-balken > span {
+        display: block; height: 100%; width: 0; background: #12a150;
+        border-radius: 99px; transition: width .4s ease;
+    }
+</style>
+
+<div class="lade-schleier" id="lade-schleier" role="status" aria-live="polite">
+    <div class="lade-box">
+        <div class="lade-spinner"></div>
+        <h2>Preise werden live verglichen …</h2>
+        <p>Wir fragen Preis und Verfügbarkeit deiner Artikel bei 4&nbsp;Shops
+            gleichzeitig ab. Das dauert nur ein paar Sekunden.</p>
+        <div class="lade-shops">
+            <span>Elektro-Wandelt</span><span>elektroland24</span>
+            <span>Voltus</span><span>Elektroshop Wagner</span>
+        </div>
+        <div class="lade-balken"><span id="lade-balken"></span></div>
+    </div>
+</div>
+
+<script>
+    // Zeigt die Lade-Anzeige und lässt den Balken zügig bis ~90 % laufen.
+    // Dort wartet er auf die Antwort (die neue Seite ersetzt dann alles).
+    function ladeAnzeigeStarten() {
+        const schleier = document.getElementById("lade-schleier");
+        const balken = document.getElementById("lade-balken");
+        if (!schleier || !balken) return;
+        schleier.classList.add("aktiv");
+        let prozent = 0;
+        const takt = setInterval(function () {
+            prozent += (92 - prozent) * 0.06;   // wird zum Ende hin langsamer
+            balken.style.width = prozent + "%";
+            if (prozent > 90) clearInterval(takt);
+        }, 200);
+    }
+
+    // Kommt der Nutzer per "Zurück" auf diese Seite (Browser-Cache),
+    // muss die Lade-Anzeige wieder verschwinden.
+    window.addEventListener("pageshow", function (e) {
+        if (e.persisted) {
+            const schleier = document.getElementById("lade-schleier");
+            if (schleier) schleier.classList.remove("aktiv");
+        }
+    });
+</script>
