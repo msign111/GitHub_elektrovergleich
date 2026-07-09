@@ -1,0 +1,80 @@
+{# _design.html – Marken-Design "Modern Cartoon" für Macher Elektro.
+   Wird auf ALLEN Seiten direkt vor </head> eingebunden:
+       {% include "_design.html" %}
+   Überschreibt die Grundfarben (Creme-Hintergrund, Tusche-Ränder) und
+   gibt Karten/Knöpfen den Comic-Look: kräftige Umrandung, harte
+   Versatz-Schatten, "drückbare" Knöpfe. Eine Datei = ein Ort zum
+   Nachschärfen des Designs. #}
+<style>
+    /* ---- Farbwelt: warmes Creme, Tusche-Grün, Sonnengelb ---- */
+    :root {
+        --bg: #FAF6ED;             /* Creme statt Klinik-Weiß */
+        --surface: #F3EDE0;
+        --surface-2: #FFFDF7;
+        --text: #1F2A24;           /* dunkle "Tusche" (grünstichig) */
+        --muted: #5C6B62;
+        --hairline: #E7DFCC;
+        --ink: #1F2A24;            /* Umrandungs-Farbe (Tusche) */
+        --accent: #12A150;
+        --accent-weak: #E9F7EE;
+        --sonne: #FFD23F;          /* fröhliches Gelb für Akzente */
+        --primary: #1F2A24;
+        /* Harte Comic-Schatten statt weicher Verläufe */
+        --shadow-sm: 2px 2px 0 rgba(31, 42, 36, .16);
+        --shadow: 6px 6px 0 rgba(31, 42, 36, .16);
+    }
+    body { background: var(--bg); }
+    /* Hintergrund-Farbtupfer: grün + sonnengelb */
+    body::before { background: radial-gradient(circle, rgba(18,161,80,.16), rgba(18,161,80,0) 66%); }
+    body::after { background: radial-gradient(circle, rgba(255,210,63,.20), rgba(255,210,63,0) 66%); }
+
+    /* ---- Karten & Kästen: Tusche-Rand + harter Schatten ---- */
+    .card, .card-haupt, .card-alt, .pcard, .box {
+        border: 2px solid var(--ink);
+        box-shadow: var(--shadow);
+    }
+    .card-haupt { box-shadow: 8px 8px 0 rgba(18, 161, 80, .28); }
+    .pcard:hover { box-shadow: 8px 8px 0 rgba(31, 42, 36, .2); transform: translate(-2px, -2px); border-color: var(--ink); }
+    .lade-schleier .lade-box { border: 2px solid var(--ink); box-shadow: var(--shadow); }
+    .lade-schleier .lade-shops span { border: 1.5px solid var(--ink); color: var(--text); }
+    .erfass-suggest, .suggest { border: 2px solid var(--ink); box-shadow: var(--shadow); }
+    .pos { border: 1.5px solid var(--ink); }
+
+    /* ---- Knöpfe: fest umrandet und "drückbar" ---- */
+    .cta, .add-btn, .korb-btn, .padd, .cartbar .go {
+        border: 2px solid var(--ink);
+        box-shadow: 3px 3px 0 var(--ink);
+        transition: transform .08s ease, box-shadow .08s ease, background .15s ease;
+    }
+    .cta:hover, .add-btn:hover, .korb-btn:hover, .padd:hover, .cartbar .go:hover {
+        transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); opacity: 1;
+    }
+    .cta:active, .add-btn:active, .korb-btn:active, .padd:active, .cartbar .go:active {
+        transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink);
+    }
+    /* Hauptknöpfe in Markengrün statt Schwarz */
+    .cta, .add-btn { background: var(--accent); border-color: var(--ink); color: #fff; }
+    .cta:hover, .add-btn:hover { background: #0E8A44; }
+    .cta:disabled { background: #A8C7B5; box-shadow: none; transform: none; border-color: #7d938a; }
+    .shop-col.is-best .korb-btn { background: var(--accent); border-color: var(--ink); color: #fff; }
+
+    /* ---- Eingabefelder: klare Tusche-Ränder ---- */
+    .erfass-zeile input, .search-box, textarea, input[type=password] {
+        border: 2px solid var(--ink);
+    }
+
+    /* ---- Pillen, Chips, Abzeichen ---- */
+    .chip, .cat, .avail, .segmented { border: 1.5px solid var(--ink); background: var(--surface-2); }
+    .segmented button.active { box-shadow: 2px 2px 0 rgba(31, 42, 36, .25); }
+    .eyebrow { background: var(--sonne); color: var(--ink); border: 1.5px solid var(--ink); }
+    .best-badge { border: 1.5px solid var(--ink); box-shadow: 2px 2px 0 rgba(31, 42, 36, .22); }
+    .stepper button, .pos-menge button { border: 1.5px solid var(--ink); box-shadow: none; }
+    .dropzone { border: 2px dashed var(--ink); }
+
+    /* ---- Vergleichstabelle (mobil: Pillen-Köpfe im Comic-Look) ---- */
+    @media (max-width: 899px) {
+        .table-wrap { border: 2px solid var(--ink); box-shadow: var(--shadow); }
+        thead th.shop-col .shop-name { border: 1.5px solid var(--ink); background: var(--surface-2); }
+        thead th.shop-col.is-best .shop-name { background: var(--accent); color: #fff; }
+    }
+</style>

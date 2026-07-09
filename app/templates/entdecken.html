@@ -90,6 +90,7 @@
 
         @media (max-width:600px){ .hero h1{font-size:30px;} .wrap{padding:0 16px 120px;} }
     </style>
+    {% include "_design.html" %}
 </head>
 <body>
     <div class="wrap">
@@ -144,11 +145,11 @@
         // ----- Auswahl (im Browser gespeichert) -----
         function ladeAuswahl(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } }
         function speichere(a){ localStorage.setItem(KEY, JSON.stringify(a)); leiste(); }
-        function hinzufuegen(kennung, titel){
+        function hinzufuegen(kennung, titel, artnr){
             if(!kennung) return;
             const a = ladeAuswahl();
             const vorhanden = a.find(x => x.k === kennung);
-            if(vorhanden) vorhanden.m += 1; else a.push({ k:kennung, t:titel, m:1 });
+            if(vorhanden) vorhanden.m += 1; else a.push({ k:kennung, t:titel, a:artnr || '', m:1 });
             speichere(a);
             toast('„' + titel.slice(0,42) + '" hinzugefügt');
         }
@@ -161,7 +162,8 @@
         function vergleichen(){
             const a = ladeAuswahl();
             if(a.length === 0) return;
-            const eingabe = a.map(x => x.k + '; ' + x.m).join('\n');
+            // "Kennung; Menge; Artikelnummer" - EAN sucht, Artikelnummer wird angezeigt
+            const eingabe = a.map(x => x.k + '; ' + x.m + (x.a && x.a !== x.k ? '; ' + x.a : '')).join('\n');
             // Vergleich im Hintergrund laden - Lade-Anzeige bleibt lebendig
             vergleichAbschicken('/warenkorb-manuell', new URLSearchParams({ eingabe: eingabe }));
         }
@@ -185,7 +187,7 @@
                 + '<div class="pname">' + esc(p.titel) + '</div>'
                 + '<div class="pmeta">' + meta + '</div>'
                 + '<div class="pbottom"><span class="pprice">' + preis + '</span>'
-                + '<button class="padd" data-k="' + esc(kennung) + '" data-t="' + esc(p.titel) + '">+ Hinzufügen</button></div>'
+                + '<button class="padd" data-k="' + esc(kennung) + '" data-a="' + esc(p.artikelnummer || '') + '" data-t="' + esc(p.titel) + '">+ Hinzufügen</button></div>'
                 + '</div>';
         }
         async function ladeProdukte(q, titel){
@@ -213,9 +215,9 @@
                     const items = (await r.json()).slice(0, 6);
                     if(items.length === 0){ suggest.classList.remove('show'); return; }
                     suggest.innerHTML = items.map(p => {
-                        const kennung = p.artikelnummer || p.ean || '';
+                        const kennung = p.ean || p.artikelnummer || '';
                         const preis = (p.preis != null) ? euro(p.preis) : '';
-                        return '<div class="sug-item" data-k="' + esc(kennung) + '" data-t="' + esc(p.titel) + '">'
+                        return '<div class="sug-item" data-k="' + esc(kennung) + '" data-a="' + esc(p.artikelnummer || '') + '" data-t="' + esc(p.titel) + '">'
                             + (p.bild ? '<img src="' + esc(p.bild) + '" alt="">' : '<img alt="">')
                             + '<span class="sug-name">' + esc(p.titel) + '</span>'
                             + '<span class="sug-price">' + preis + '</span></div>';
@@ -234,7 +236,7 @@
         suggest.addEventListener('click', (e) => {
             const it = e.target.closest('.sug-item');
             if(!it) return;
-            hinzufuegen(it.dataset.k, it.dataset.t);
+            hinzufuegen(it.dataset.k, it.dataset.t, it.dataset.a);
             suggest.classList.remove('show');
         });
         document.addEventListener('click', (e) => {
@@ -258,7 +260,7 @@
         grid.addEventListener('click', (e) => {
             const b = e.target.closest('.padd');
             if(!b) return;
-            hinzufuegen(b.dataset.k, b.dataset.t);
+            hinzufuegen(b.dataset.k, b.dataset.t, b.dataset.a);
         });
 
         document.getElementById('cart-go').addEventListener('click', vergleichen);

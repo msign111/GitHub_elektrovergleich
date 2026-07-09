@@ -4,6 +4,10 @@
 #   MBN116                 (nur eine Artikelnummer)
 #   4012740123456; 10      (EAN mit Menge 10)
 #   MBN116; 5              (Artikelnummer mit Menge 5)
+#   4012740123456; 10; MBN116  (EAN mit Menge UND Artikelnummer –
+#                               so übergibt die Startseite beide Nummern:
+#                               EAN für die eindeutige Suche, Artikel-
+#                               nummer für die Anzeige)
 
 from app.modelle import Position
 
@@ -43,7 +47,8 @@ def positionen_aus_text(text: str) -> list[Position]:
         # Ist die Kennung eine EAN oder eine Artikelnummer?
         if _ist_ean(kennung):
             ean = kennung
-            artikelnummer = ""
+            # Optionaler dritter Teil: die Artikelnummer (für die Anzeige)
+            artikelnummer = teile[2] if len(teile) > 2 else ""
         else:
             ean = ""
             artikelnummer = kennung

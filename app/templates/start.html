@@ -240,6 +240,7 @@
         }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
     </style>
+    {% include "_design.html" %}
 </head>
 <body>
     <div class="wrap">
@@ -486,7 +487,13 @@
 
             vergleichBtn.addEventListener("click", () => {
                 if (positionen.length === 0) return;
-                const eingabe = positionen.map(p => p.k + "; " + p.m).join("\n");
+                // Format je Zeile: "Kennung; Menge; Artikelnummer" - die EAN
+                // sucht eindeutig, die Artikelnummer wird im Vergleich angezeigt
+                const eingabe = positionen.map(p => {
+                    let zeile = p.k + "; " + p.m;
+                    if (p.artnr && norm(p.artnr) !== norm(p.k)) zeile += "; " + p.artnr;
+                    return zeile;
+                }).join("\n");
                 // Sofort zeigen, dass es losgeht (Knopf sperren + Lade-Anzeige);
                 // der Vergleich wird im Hintergrund geladen, damit die
                 // Animationen weiterlaufen (v. a. iPhone).

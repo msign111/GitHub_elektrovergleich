@@ -237,28 +237,37 @@ async def api_suche(q: str = ""):
     return JSONResponse(KATALOG_QUELLE.produktliste(begriff, anzahl=24))
 
 
-def _ean_ergaenzen(positionen) -> None:
+def _nummern_ergaenzen(positionen) -> None:
     """
-    Macht die Suche EINDEUTIG: Fehlt einer Position die EAN, wird sie über
-    die Katalog-Suche anhand der Artikelnummer nachgeschlagen. Alle Shops
-    suchen dann mit der EAN (weltweit eindeutig) statt mit der mehrdeutigen
-    Artikelnummer - das verhindert falsche Treffer, z. B. die falsche
-    Variante bei Elektroshop Wagner (dort teilen sich ganze Varianten-
-    Familien eine Nummer). Die Artikelnummer bleibt als Notnagel erhalten.
+    Vervollständigt die Nummern jeder Position über die Katalog-Suche:
+    - Fehlt die EAN, wird sie anhand der Artikelnummer nachgeschlagen.
+      Alle Shops suchen dann mit der EAN (weltweit eindeutig) - das
+      verhindert falsche Treffer, z. B. die falsche Variante bei Wagner.
+    - Fehlt die Artikelnummer, wird sie anhand der EAN nachgeschlagen,
+      denn ANGEZEIGT wird die Artikelnummer (bei Kunden geläufiger).
+    Läuft parallel, damit große Warenkörbe nicht ausgebremst werden.
     """
-    for p in positionen:
-        if p.ean or not p.artikelnummer:
-            continue
+    def _fuellen(p):
         try:
-            treffer = KATALOG_QUELLE.produktliste(p.artikelnummer, anzahl=5)
+            if not p.ean and p.artikelnummer:
+                gesucht = re.sub(r"[^a-z0-9]", "", p.artikelnummer.lower())
+                for t in KATALOG_QUELLE.produktliste(p.artikelnummer, anzahl=5):
+                    t_nr = re.sub(r"[^a-z0-9]", "", str(t.get("artikelnummer") or "").lower())
+                    if t_nr == gesucht and t.get("ean"):
+                        p.ean = str(t["ean"])
+                        break
+            elif p.ean and not p.artikelnummer:
+                for t in KATALOG_QUELLE.produktliste(p.ean, anzahl=3):
+                    if str(t.get("ean") or "") == p.ean and t.get("artikelnummer"):
+                        p.artikelnummer = str(t["artikelnummer"])
+                        break
         except Exception:
-            continue  # Katalog nicht erreichbar -> einfach ohne EAN weitersuchen
-        gesucht = re.sub(r"[^a-z0-9]", "", p.artikelnummer.lower())
-        for t in treffer:
-            t_nr = re.sub(r"[^a-z0-9]", "", str(t.get("artikelnummer") or "").lower())
-            if t_nr == gesucht and t.get("ean"):
-                p.ean = str(t["ean"])
-                break
+            pass  # Katalog nicht erreichbar -> mit den vorhandenen Nummern weiter
+
+    offen = [p for p in positionen if bool(p.ean) != bool(p.artikelnummer)]
+    if offen:
+        with ThreadPoolExecutor(max_workers=min(8, len(offen))) as pool:
+            list(pool.map(_fuellen, offen))
 
 
 @app.get("/vergleich")
@@ -281,7 +290,7 @@ def warenkorb_hochladen(request: Request, datei: UploadFile = File(...)):
     """Nimmt die hochgeladene CSV-Datei entgegen und zeigt den Preisvergleich."""
     inhalt = datei.file.read()
     positionen = csv_einlesen(inhalt)
-    _ean_ergaenzen(positionen)
+    _nummern_ergaenzen(positionen)
     return _vergleich_anzeigen(request, positionen, quelle=f"CSV-Datei: {datei.filename}")
 
 
@@ -289,5 +298,5 @@ def warenkorb_hochladen(request: Request, datei: UploadFile = File(...)):
 def warenkorb_manuell(request: Request, eingabe: str = Form("")):
     """Nimmt direkt eingetippte Artikel/EANs entgegen und zeigt den Preisvergleich."""
     positionen = positionen_aus_text(eingabe)
-    _ean_ergaenzen(positionen)
+    _nummern_ergaenzen(positionen)
     return _vergleich_anzeigen(request, positionen, quelle="Direkteingabe")
